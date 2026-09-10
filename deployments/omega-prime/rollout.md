@@ -19,6 +19,10 @@ receiving the test instructions. Advance only after the previous stage's
 evidence has been reviewed with Rand. This staged validation is the requested
 rollout process, not a general restriction on reading evidence or fixing bugs.
 
+The [stage-1 acceptance record](stage-1-acceptance.md) confirms the manual
+functional smoke test and lists its remaining coverage limits. Scheduled
+capture is the next stage; acceptance itself does not enable scheduling.
+
 ## Stage 1 test procedure
 
 Use the installed skill root, Python interpreter, config file, activity-state
