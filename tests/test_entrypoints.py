@@ -29,7 +29,8 @@ class EntrypointTests(unittest.TestCase):
     def test_cli_help_loads_without_services_or_credentials(self):
         paths = [ROOT / 'scripts' / 'check_naming.py']
         paths += list((ROOT / 'scripts' / 'cron').glob('collect_*.py'))
-        paths += [ROOT / 'scripts' / 'cron' / name for name in ('tick.py', 'check_health.py')]
+        paths += [ROOT / 'scripts' / 'cron' / name for name in
+                  ('tick.py', 'check_health.py', 'detect_activity.py', 'monitor_phase.py')]
         paths += list((ROOT / 'scripts' / 'oversight').glob('*.py'))
         for path in paths:
             with self.subTest(path=path.name):

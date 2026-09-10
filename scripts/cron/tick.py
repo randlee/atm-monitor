@@ -61,6 +61,8 @@ def jobs(config):
 def run_tick(config, state_dir, collector=collect):
     with locked(state_dir):
         previous, recovery_errors = read_latest(state_dir)
+        if previous and previous.get('role') == 'activity':
+            raise ValueError('phase state directory contains activity state; use separate directories')
         specifications = jobs(config)
         with ThreadPoolExecutor(max_workers=4) as pool:
             futures = [(key, pool.submit(collector, kind, **options))

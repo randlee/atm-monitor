@@ -1,5 +1,10 @@
 # Running the local prototype
 
+Start with the harness-independent [installation guide](installation.md) for
+the two scheduled jobs and return codes. The commands below describe the
+lower-level collector and state tools. `tick.py` remains useful for a manual
+all-configured-teams scan; do not schedule it alongside `monitor_phase.py`.
+
 Python 3.11+ and Git are required. The collectors additionally need authenticated
 `atm`, `herdr`, and `gh` commands on the scheduler's PATH. Unit tests require
 only Python and Git and never contact these live services.
@@ -37,7 +42,8 @@ result at its configured bound is explicitly partial.
 
 ## Scheduling
 
-Start with a manual tick and inspect its snapshot/report. For the first pilot,
+Prefer the two-job schedule in [installation](installation.md). For a deliberate
+all-configured-teams collection test, start with a manual tick and inspect its snapshot/report. For the first pilot,
 a five-minute schedule is a conservative starting setting, not a requirement
 or a validated production interval. In a cron entry, substitute absolute paths
 from the actual installation:

@@ -31,10 +31,16 @@ report command. Its `sources` are the current collection results;
 used. A failed source, partial query, missing plan association, or empty task
 ledger does not establish that an agent has no work.
 
-Cron owns routine collection through `scripts/cron/tick.py`. An operator can
-request a fresh tick with `--config <config> --state-dir <state>`. It is
-read-only against ATM/GitHub and uses a state lock; exit 3 means another tick
-is running. Do not remove the lock file to force concurrent collection.
+Cron runs `scripts/cron/detect_activity.py --config <config> --state-dir <activity-state>`
+and `scripts/cron/monitor_phase.py --config <config> --activity-dir <activity-state>
+--state-dir <phase-state>`. Use the phase state for reports, health checks,
+and intervention records. Detection maintains the watch list; phase monitoring
+makes team-specific queries. Both are read-only against ATM/GitHub. Their exits
+are 0 (silent success), 1 (attention), 2 (monitor failure), and 3 (overlap).
+`--json` prints manual diagnostics even on healthy runs. Do not remove a lock
+file to force concurrent collection. See [installation](../../docs/installation.md).
+The lower-level `tick.py` remains available for a deliberate scan of all
+configured teams; it is not an additional scheduled job.
 
 ## Findings and follow-up
 

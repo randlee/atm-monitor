@@ -74,6 +74,10 @@ change or intervention is part of the current rollout.
   naming validator and hook entrypoints, with snapshot tests in `tests/`.
 - `scripts/cron/`: independent collectors, JSON state/recovery, one-shot tick,
   phase discovery through PR/plan associations, and routed health findings.
+  `detect_activity.py` maintains a watch list from a configured team catalog;
+  `monitor_phase.py` performs team-specific collection for watched teams and
+  emits findings. Their silent-success/attention/failure/overlap contract is
+  documented in [installation](installation.md), with a separate Hermes adapter.
 - `scripts/oversight/`: report rendering, bounded message mining, and
   intervention checkpoints; `skills/` describes their operational use.
 - `.github/workflows/tests.yml`: Linux/macOS/Windows unit-test matrix on

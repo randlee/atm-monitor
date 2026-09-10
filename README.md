@@ -11,9 +11,9 @@ computer with JSON state; SQLite and multiple computers are later stages.
 
 ```sh
 python -m unittest discover -s tests -v
-python scripts/cron/tick.py --config config/example.json --state-dir <state-directory>
-python scripts/cron/check_health.py --state-dir <state-directory>
-python scripts/oversight/report.py --state-dir <state-directory> --team atm-dev
+python scripts/cron/detect_activity.py --config config/example.json --state-dir <activity-state-directory> --json
+python scripts/cron/monitor_phase.py --config config/example.json --activity-dir <activity-state-directory> --state-dir <phase-state-directory> --json
+python scripts/oversight/report.py --state-dir <phase-state-directory> --team atm-dev
 ```
 
 Python 3.11+ and Git are sufficient for tests. Live collectors also require
@@ -25,7 +25,9 @@ cover source failures, partial results, identity isolation, staged/pushed Git
 snapshots, interrupted writes, lock recovery, stale evidence, notification
 routing, and intervention persistence.
 
-See [operations](docs/operations.md) for setup and recovery,
+See [installation and usage](docs/installation.md) for the two scheduled jobs
+and oversight workflow, [the Hermes adapter](docs/hermes-installation.md) for
+harness setup, [operations](docs/operations.md) for recovery,
 [notification policy](docs/notification-policy.md) for oversight directions,
 [naming conventions](docs/naming-conventions.md) for repository rollout, and
 [improvement plan](docs/improvement-plan.md) for the next gates and OTel priorities.
