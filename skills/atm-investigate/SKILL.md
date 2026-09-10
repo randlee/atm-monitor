@@ -53,4 +53,3 @@ Return the diagnosis with supporting message IDs and timestamps, what remains
 uncertain, the current owner, and a concrete proposed next action. Check recent
 interventions before proposing another. Do not close findings based only on
 a developer's claim; use the subsequent QA disposition at the relevant commit.
-

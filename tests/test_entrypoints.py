@@ -1,13 +1,31 @@
 from pathlib import Path
+import json
+import os
 import re
 import subprocess
 import sys
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class EntrypointTests(unittest.TestCase):
+    def test_report_outputs_utf8_even_with_ascii_stdout_environment(self):
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory) / 'snapshots'
+            folder.mkdir()
+            data = {'schema_version': 1, 'observed_at': '2026-09-10T00:00:00Z',
+                    'teams': [{'name': 'a'}], 'sources': {'a/ci': {'status': 'ok', 'data': []}},
+                    'tracked_sprints': {'a': {}}}
+            (folder / '000000000001.json').write_text(json.dumps(data), encoding='utf-8')
+            env = dict(os.environ, PYTHONIOENCODING='ascii')
+            result = subprocess.run([sys.executable, str(ROOT / 'scripts/oversight/report.py'),
+                                     '--state-dir', directory, '--team', 'a'],
+                                    capture_output=True, env=env, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn('—', result.stdout.decode('utf-8'))
+
     def test_cli_help_loads_without_services_or_credentials(self):
         paths = [ROOT / 'scripts' / 'check_naming.py']
         paths += list((ROOT / 'scripts' / 'cron').glob('collect_*.py'))

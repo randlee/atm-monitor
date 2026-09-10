@@ -133,7 +133,7 @@ def audit(repo):
     # Standalone extracted repos work too; no Git mutation or checkout needed.
     if not (repo / 'docs' / 'plans').is_dir():
         raise ValueError('docs/plans does not exist; cannot audit plan coverage')
-    return [(p.relative_to(repo).as_posix(), p.read_text())
+    return [(p.relative_to(repo).as_posix(), p.read_text(encoding='utf-8'))
             for p in sorted((repo / 'docs' / 'plans').rglob('*.md'))
             if is_plan(p.relative_to(repo).as_posix())]
 

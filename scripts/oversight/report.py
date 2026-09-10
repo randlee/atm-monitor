@@ -111,6 +111,8 @@ def natural_key(value):
 
 
 def main():
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--state-dir', type=Path, required=True)
     p.add_argument('--team', required=True)

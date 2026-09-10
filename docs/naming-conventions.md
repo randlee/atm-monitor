@@ -104,4 +104,3 @@ so editing a nonconforming historical plan requires migrating that plan too.
 They do not force a whole-history rename. A repository-wide CI audit should
 become blocking only after that repository's baseline is clean. Git hooks can
 be bypassed, so repository policy and eventual CI enforcement remain necessary.
-

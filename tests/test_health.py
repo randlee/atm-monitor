@@ -86,6 +86,15 @@ class HealthTests(unittest.TestCase):
         self.pr['headRefOid'] = 'def'
         self.assertNotEqual(old, evaluate(self.snapshot)[0]['incident_key'])
 
+    def test_operator_delivery_remains_pending_when_only_team_was_notified(self):
+        self.pr.update(state='MERGED', mergedAt='2026-09-10T02:00:00Z')
+        child = dict(self.pr, number=2, headRefName='feature/b', mergedAt='2026-09-10T01:00:00Z')
+        self.snapshot['sources']['a/ci']['data'].append(child)
+        self.snapshot['tracked_sprints'] = {'a': {'AZ/AZ.2': {'branch': 'feature/b', 'integration_branch': 'feature/a'}}}
+        incident = evaluate(self.snapshot)[0]['incident_key']
+        self.snapshot['interventions'] = {incident: {'team-lead@a': {'status': 'sent'}}}
+        self.assertEqual(evaluate(self.snapshot)[0]['pending_routes'], ['operator:telegram'])
+
     def test_recorded_intervention_survives_tick(self):
         with tempfile.TemporaryDirectory() as directory:
             with locked(directory):
