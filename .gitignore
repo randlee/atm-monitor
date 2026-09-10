@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local monitoring artifacts
+__pycache__/
+*.pyc
+.venv/
+.state/
+.pytest_cache/
