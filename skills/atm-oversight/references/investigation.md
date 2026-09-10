@@ -1,8 +1,3 @@
----
-name: atm-investigate
-description: Investigate stalled ATM work or repeated QA rounds by retrieving bounded task and message evidence, tracing attempted fixes and decisions, and proposing a specific intervention.
----
-
 # Investigate ATM work
 
 Start from the finding's team, phase/sprint, task IDs, PR, and observed time.

@@ -80,10 +80,11 @@ refs, new branches, branch deletion, and pushing a ref other than the checkout.
 Tags are outside its branch/plan gate. Detached commits skip branch-name checks;
 the pushed branch name is checked at pre-push.
 
-Copy `scripts/check_naming.py` and `scripts/plan_metadata.py` into the target
-repository's `scripts/` directory before adding hooks. The supplied executable
-`hooks/pre-commit` and `hooks/pre-push` work directly in repositories without
-existing hooks. For a repository with no existing active hooks, copy `hooks/`
+Set `ATM_MONITOR_SKILL_ROOT` to the installed `atm-oversight` directory and
+`ATM_MONITOR_PYTHON` to the desired Python interpreter in the hook environment.
+Keep the validator inside the versioned skill bundle. The supplied executable
+`assets/hooks/pre-commit` and `assets/hooks/pre-push` can be used in repositories without
+existing hooks. For a repository with no existing active hooks, copy `assets/hooks/`
 and enable it with `git config core.hooksPath hooks`.
 
 For repositories with existing hooks, integrate the checker into those hooks;
@@ -95,7 +96,7 @@ stdin once and replay it to each consumer:
 updates=$(mktemp)
 trap 'rm -f "$updates"' EXIT HUP INT TERM
 cat > "$updates"
-python3 "$repo_root/scripts/check_naming.py" --repo "$repo_root" --pre-push < "$updates" || exit $?
+"${ATM_MONITOR_PYTHON:-python3}" "$ATM_MONITOR_SKILL_ROOT/scripts/check_naming.py" --repo "$repo_root" --pre-push < "$updates" || exit $?
 # Feed the same file to existing pre-push checks.
 ```
 

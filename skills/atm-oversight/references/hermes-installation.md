@@ -12,24 +12,24 @@ other settings and entries:
 ```yaml
 skills:
   external_dirs:
-    - /absolute/path/to/atm-monitor/skills
+    - /absolute/path/to/hendrix/omega-prime/skills
 ```
 
 The standard named-profile config lives at
 `~/.hermes/profiles/<name>/config.yaml`; use the actual profile home if relocated.
 For Hendrix-managed profiles, update the managed configuration source and use
 that profile's existing deployment process. Skills remain canonical in
-atm-monitor. Do not copy only `SKILL.md`: the procedures need `scripts/` and
-`docs/` in the full checkout.
+atm-monitor. Install the complete `atm-oversight` directory with its scripts,
+references, assets, and tests; no source checkout is required at runtime.
 
 External directories expose skills to Hermes and as slash commands; local
 same-named skills take precedence. Check for stale copies. See the official
 [skills documentation](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills#external-skill-directories)
 and [profile documentation](https://hermes-agent.nousresearch.com/docs/user-guide/profiles/).
 
-Start a fresh session and verify that all three `atm-*` skills load from this
-checkout. Use terminal/file tools to read `checkout/docs/` references outside
-an individual skill directory; the skill-file reader is scoped to that directory.
+Start a fresh session and verify that `atm-oversight` loads from the deployed
+directory. All referenced files are now inside that one skill, including the
+investigation and repository-consistency procedures.
 The profile's terminal must reach the repos and local ATM/Herdr services.
 
 ## First agent test
@@ -42,7 +42,7 @@ hermes --profile <name> chat --skills atm-oversight --query-file /absolute/path/
 ```
 
 Use `/atm-oversight report status for atm-dev` for subsequent report requests,
-or `/atm-investigate explain repeated QA rounds for <sprint>`. Supply the same
+or `/atm-oversight investigate repeated QA rounds for <sprint>`. Supply the same
 installation paths. An existing Telegram-connected profile can receive these
 requests; test the actual request/reply separately from scheduled alerts.
 
@@ -73,7 +73,7 @@ hashing is documented in the upstream
 [monitor source](https://github.com/NousResearch/hermes-agent/blob/main/cron/monitor.py).
 
 Hermes scripts must reside under the selected profile's `scripts/` directory.
-Place a small `.sh` launcher there that invokes the actual checkout by absolute
+Place a small `.sh` launcher there that invokes the installed skill by absolute
 path; do not symlink outside that directory. The launcher must translate the
 monitoring return codes for Hermes: codes 0 and 3 become silent success; code 1
 becomes exit 0 with its JSON payload on stdout; code 2 remains a failure.
@@ -84,7 +84,7 @@ For example, a phase-monitor launcher for a macOS/Linux host is:
 ```sh
 #!/bin/sh
 # Replace these installation paths. Do not add `set -e` before capturing status.
-/absolute/path/to/python3 /absolute/path/to/atm-monitor/scripts/cron/monitor_phase.py \
+/absolute/path/to/python3 /absolute/path/to/atm-oversight/scripts/cron/monitor_phase.py \
   --config /absolute/path/to/monitor.json \
   --activity-dir /absolute/path/to/state/activity \
   --state-dir /absolute/path/to/state/phases
@@ -114,8 +114,7 @@ unresolved-incident follow-up; these launchers alone do not provide that worker.
 
 ## Verification
 
-The installed Hermes runtime discovered and loaded all three skills with
-`skills.external_dirs` in an isolated temporary Hermes home on September 10,
-2026. CLI help confirmed the profile/chat/cron options described above. No live
-profile, scheduler, gateway, or model session was changed by that smoke check.
-The target profile's model, scheduler, and Telegram behavior remain pilot tests.
+Verify skill discovery after distribution, then run the tests contained in the
+deployed bundle. CLI help was used to confirm the profile/chat/cron options
+described above. Model, scheduler, and Telegram behavior are separate rollout
+tests; successful skill loading does not establish those results.

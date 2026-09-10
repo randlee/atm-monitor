@@ -88,6 +88,19 @@ class CollectorTests(unittest.TestCase):
         result = collect('stack', run=self.response(None, 2, 'API authorization failure'))
         self.assertEqual(result['status'], 'unavailable')
 
+    def test_merged_stack_entry_can_outlive_its_local_ref(self):
+        data = {'trunk': 'develop', 'branches': [
+            {'name': 'feature/merged', 'isMerged': True, 'needsRebase': False},
+            {'name': 'feature/active', 'head': 'abc', 'isMerged': False, 'needsRebase': True}]}
+        result = collect('stack', run=self.response(data))
+        self.assertEqual(result['status'], 'ok')
+        self.assertEqual(result['data'], data)
+
+    def test_unmerged_stack_entry_still_requires_head(self):
+        data = {'trunk': 'develop', 'branches': [
+            {'name': 'feature/active', 'isMerged': False, 'needsRebase': True}]}
+        self.assertEqual(collect('stack', run=self.response(data))['status'], 'unavailable')
+
     def test_subprocess_is_noninteractive_and_uses_argv(self):
         def inspect(cmd, **kwargs):
             self.assertIsInstance(cmd, list)

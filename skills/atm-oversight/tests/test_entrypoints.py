@@ -40,7 +40,7 @@ class EntrypointTests(unittest.TestCase):
                 self.assertIn('usage:', result.stdout.lower())
 
     def test_skill_entrypoints_and_local_reference_links(self):
-        paths = sorted((ROOT / 'skills').glob('*/SKILL.md'))
+        paths = [ROOT / 'SKILL.md']
         self.assertTrue(paths)
         for path in paths:
             with self.subTest(skill=path.parent.name):

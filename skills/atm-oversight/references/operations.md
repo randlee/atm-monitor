@@ -11,19 +11,19 @@ only Python and Git and never contact these live services.
 
 ## Configure and run
 
-Copy `config/example.json` to a local config. Set each team's name and repository
+Copy `assets/monitor.example.json` to a local config. Set each team's name and repository
 path. Paths resolve relative to the config file, not the caller's directory.
-The example assumes atm-core is a sibling checkout. Add a second team by adding
+The example repo path is a placeholder and must be configured. Add a second team by adding
 another object to `teams`; duplicate names are rejected.
 
 `worktrees` optionally adds explicit paths. The tick also discovers existing
 worktrees for open PR branches and checks their Git history and stack state.
 It never checks out branches, fetches, rebases, or starts agents.
 
-From the checkout:
+From the skill directory:
 
 ```sh
-python scripts/cron/tick.py --config config/example.json --state-dir <temporary-state-directory>
+python scripts/cron/tick.py --config assets/monitor.example.json --state-dir <temporary-state-directory>
 python scripts/oversight/report.py --state-dir <temporary-state-directory> --team atm-dev
 python scripts/oversight/mine_messages.py --team atm-dev --kind qa-report --with-bodies > <qa-evidence-file>
 python scripts/oversight/report.py --state-dir <temporary-state-directory> --team atm-dev --qa-evidence <qa-evidence-file>
@@ -49,7 +49,7 @@ or a validated production interval. In a cron entry, substitute absolute paths
 from the actual installation:
 
 ```text
-*/5 * * * * /path/to/python /path/to/atm-monitor/scripts/cron/tick.py --config /path/to/monitor.json --state-dir /path/to/temp-state >> /path/to/tick.log 2>&1
+*/5 * * * * /path/to/python /path/to/atm-oversight/scripts/cron/tick.py --config /path/to/monitor.json --state-dir /path/to/temp-state >> /path/to/tick.log 2>&1
 ```
 
 Set cron's PATH to the directories containing this installation's ATM, Herdr,

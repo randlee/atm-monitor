@@ -1,12 +1,7 @@
----
-name: atm-repo-consistency
-description: Audit and roll out ATM plan, branch, and worktree naming conventions with tested Git hooks while preserving existing repository checks.
----
-
 # Repository consistency
 
-Read [naming conventions](../../docs/naming-conventions.md) for the proposed
-identity contract and [improvement plan](../../docs/improvement-plan.md) for
+Read [naming conventions](naming-conventions.md) for the proposed
+identity contract and [improvement plan](improvement-plan.md) for
 the adoption sequence. Audit first with
 `python scripts/check_naming.py --repo <repo> --all --json`.
 

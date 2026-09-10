@@ -103,7 +103,10 @@ def decode(kind, raw, team):
     if kind == 'stack':
         if not isinstance(data, dict) or not isinstance(data.get('trunk'), str):
             raise ValueError('stack response missing trunk')
-        require(list_of_objects(data.get('branches'), 'branches'), ('name', 'head', 'needsRebase'))
+        branches = require(list_of_objects(data.get('branches'), 'branches'), ('name', 'needsRebase'))
+        # gh-stack retains merged entries after their local refs disappear.
+        # Their head may be omitted; an active branch still needs commit identity.
+        require([row for row in branches if row.get('isMerged') is not True], ('head',))
         return data
     raise ValueError('unsupported decoder')
 

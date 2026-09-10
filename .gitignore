@@ -223,3 +223,5 @@ __pycache__/
 .venv/
 .state/
 .pytest_cache/
+# Local archives, deployment configuration, and captured monitoring evidence.
+.local/

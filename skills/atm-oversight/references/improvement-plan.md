@@ -70,7 +70,7 @@ change or intervention is part of the current rollout.
 - [Monitoring workflow](monitoring-workflow.md): user requirements and discovery model.
 - [Query survey](query-survey.md): observed interfaces and coverage gaps.
 - [Naming conventions](naming-conventions.md): proposed naming and hook rollout.
-- `scripts/check_naming.py`, `scripts/plan_metadata.py`, and `hooks/`: initial
+- `scripts/check_naming.py`, `scripts/plan_metadata.py`, and `assets/hooks/`: initial
   naming validator and hook entrypoints, with snapshot tests in `tests/`.
 - `scripts/cron/`: independent collectors, JSON state/recovery, one-shot tick,
   phase discovery through PR/plan associations, and routed health findings.
@@ -79,8 +79,8 @@ change or intervention is part of the current rollout.
   emits findings. Their silent-success/attention/failure/overlap contract is
   documented in [installation](installation.md), with a separate Hermes adapter.
 - `scripts/oversight/`: report rendering, bounded message mining, and
-  intervention checkpoints; `skills/` describes their operational use.
-- `.github/workflows/tests.yml`: Linux/macOS/Windows unit-test matrix on
+  intervention checkpoints; `SKILL.md` and `references/` describe their operational use.
+- The source repo's `.github/workflows/tests.yml`: Linux/macOS/Windows unit-test matrix on
   Python 3.11 and 3.13, without service credentials.
 
 The naming checker does not yet enforce project-index completeness, assignment

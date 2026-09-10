@@ -56,22 +56,22 @@ have different meanings. No sender is installed by these scripts.
 
 ## Install and configure
 
-1. Check out the complete repo at a recorded tested revision. The initial
-   implementation is in [PR #1](https://github.com/randlee/atm-monitor/pull/1),
-   branch `feature/local-monitor-foundation`.
+1. Install the complete `atm-oversight` skill directory from a recorded tested
+   atm-monitor revision. Its deployment receipt identifies the bundle contents.
+   Run the commands below from that installed directory.
 2. Make Python 3.11+, Git, `atm`, `herdr`, authenticated `gh`, and `gh stack`
    available in the scheduler and oversight execution environments. These
    environments must reach the monitored repos and local ATM/Herdr services.
-3. Copy `config/example.json` to a deployment-owned config file. Set each
+3. Copy `assets/monitor.example.json` to a deployment-owned config file. Set each
    candidate team's `name`, `repo`, and optional `worktrees`. Paths resolve
    relative to the config file; absolute paths are also accepted. JSON paths
    do not expand shell variables or `~`.
 4. Select separate activity and phase state directories, such as
    `<state>/activity` and `<state>/phases`. Use stable paths throughout the
    pilot. Temporary storage is acceptable initially; losing it loses history.
-5. Run `python3 -m unittest discover -s tests -q` from the checkout.
+5. Run `python3 -m unittest discover -s tests -q` from the skill directory.
 
-From the checkout, run each command independently with actual paths:
+From the skill directory, run each command independently with actual paths:
 
 ```sh
 python3 scripts/cron/detect_activity.py --config /absolute/path/to/monitor.json --state-dir /absolute/path/to/state/activity --json
@@ -91,8 +91,8 @@ every five minutes for phase monitoring. These are pilot settings, not proven
 production intervals. For OS cron, substitute the actual paths:
 
 ```text
-*/2 * * * * /path/to/python3 /path/to/atm-monitor/scripts/cron/detect_activity.py --config /path/to/monitor.json --state-dir /path/to/state/activity >> /path/to/activity-actions.log 2>&1
-*/5 * * * * /path/to/python3 /path/to/atm-monitor/scripts/cron/monitor_phase.py --config /path/to/monitor.json --activity-dir /path/to/state/activity --state-dir /path/to/state/phases >> /path/to/phase-actions.log 2>&1
+*/2 * * * * /path/to/python3 /path/to/atm-oversight/scripts/cron/detect_activity.py --config /path/to/monitor.json --state-dir /path/to/state/activity >> /path/to/activity-actions.log 2>&1
+*/5 * * * * /path/to/python3 /path/to/atm-oversight/scripts/cron/monitor_phase.py --config /path/to/monitor.json --activity-dir /path/to/state/activity --state-dir /path/to/state/phases >> /path/to/phase-actions.log 2>&1
 ```
 
 Set the scheduler's PATH for the service executables and rotate these logs.
@@ -105,15 +105,15 @@ For an agent harness, keep these same scripts and state contracts and adapt
 only registration, wake-up, and delivery. See the
 [Hermes adapter](hermes-installation.md) for verified Hermes options.
 
-## How oversight uses the skills
+## How oversight uses the skill
 
-| Skill | Use | Supporting scripts |
+| Procedure within `atm-oversight` | Use | Supporting scripts |
 |---|---|---|
-| `atm-oversight` | Handle a finding; answer status requests; verify follow-up | `report.py`, `check_health.py`, `record_intervention.py` |
-| `atm-investigate` | Explain stalls, repeated QA, or ambiguous evidence | `mine_messages.py` |
-| `atm-repo-consistency` | Planned rollout of naming and metadata conventions | `check_naming.py` and the sample hooks |
+| `SKILL.md` | Handle a finding; answer status requests; verify follow-up | `report.py`, `check_health.py`, `record_intervention.py` |
+| `references/investigation.md` | Explain stalls, repeated QA, or ambiguous evidence | `mine_messages.py` |
+| `references/repo-consistency.md` | Planned rollout of naming and metadata conventions | `check_naming.py` and the sample hooks |
 
-Give the agent the checkout, interpreter, config, activity-state and phase-state
+Give the agent the skill directory, interpreter, config, activity-state and phase-state
 paths, allowed team catalog, and deployment notification routes. The main skill
 returns `Sprint | DEV | QA | CI | FND`; it does not infer QA approval from CI.
 Message mining is bounded and on demand. Naming hooks are installed separately
@@ -122,12 +122,12 @@ during an agreed repository rollout, preserving existing gates.
 Use this initial pilot instruction with actual paths:
 
 ```text
-Use atm-oversight. Checkout: <path>; Python: <path>; config: <path>;
+Use atm-oversight. Skill directory: <path>; Python: <path>; config: <path>;
 activity state: <path>; phase state: <path>; team: atm-dev.
 Run the two scheduled scripts once, inspect source health, render the status
 table, and inspect findings. Use the phase state directory for report.py and
-check_health.py. Read the notification policy from checkout/docs.
-Preserve unknown/stale/partial evidence. Use atm-investigate when a finding
+check_health.py. Read the notification policy from skill-directory/references.
+Preserve unknown/stale/partial evidence. Read references/investigation.md when a finding
 needs explanation. Return incident keys, evidence, intended recipients, and
 proposed messages here. This is a capture-only pilot: do not send messages or
 record proposals as delivered, alter monitored work, or install schedules/hooks.

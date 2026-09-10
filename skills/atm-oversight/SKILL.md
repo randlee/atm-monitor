@@ -5,14 +5,20 @@ description: Report on monitored ATM phases and sprints, interpret collection he
 
 # ATM oversight
 
-Use the configured atm-monitor checkout, state directory, and team. Resolve
-paths from the checkout; do not embed a developer's home directory in commands.
+This is a self-contained skill. Run commands from the directory containing
+this `SKILL.md`, using the deployment's configured Python interpreter, config,
+and state paths. All scripts and references are inside this directory.
 The configuration and current snapshot identify the monitored teams.
+
+The authoritative source is `atm-monitor/skills/atm-oversight`. Installed copies
+are distribution artifacts: propose fixes in atm-monitor, test, then distribute
+the whole bundle. Do not patch a deployed script or policy as a permanent fix.
+Read the deployment's rollout instructions before enabling schedules or sends.
 
 ## Reporting
 
 Run `python scripts/oversight/report.py --state-dir <state> --team <team>`
-from the checkout. Return its `Sprint | DEV | QA | CI | FND` table. Preserve
+from the skill directory. Return its `Sprint | DEV | QA | CI | FND` table. Preserve
 freshness and coverage notes; `—` means evidence is missing, not success.
 Read-only report requests do not require a model to reconstruct status from
 memory. The script can include structured QA evidence produced below.
@@ -38,13 +44,13 @@ and intervention records. Detection maintains the watch list; phase monitoring
 makes team-specific queries. Both are read-only against ATM/GitHub. Their exits
 are 0 (silent success), 1 (attention), 2 (monitor failure), and 3 (overlap).
 `--json` prints manual diagnostics even on healthy runs. Do not remove a lock
-file to force concurrent collection. See [installation](../../docs/installation.md).
+file to force concurrent collection. See [installation](references/installation.md).
 The lower-level `tick.py` remains available for a deliberate scan of all
 configured teams; it is not an additional scheduled job.
 
 ## Findings and follow-up
 
-Read [notification policy](../../docs/notification-policy.md) when handling
+Read [notification policy](references/notification-policy.md) when handling
 findings. Run `python scripts/cron/check_health.py --state-dir <state>` for
 deterministic findings and pending recipients. CI failure and merge conflict
 go to team-lead. Confirmed stack-rule violations and out-of-order merges go
@@ -56,8 +62,8 @@ diagnostics as distinct evidence. `working`, `idle`, and `done` describe
 Herdr process observations, not task or sprint completion. CI success does
 not establish QA approval or a maintained stack.
 
-When the cause needs investigation, use the adjacent
-[atm-investigate skill](../atm-investigate/SKILL.md). A high QA-round count
+When the cause needs investigation, read the
+[investigation procedure](references/investigation.md). A high QA-round count
 is a reason to inspect the dialogue, not a diagnosis or automatic restart.
 
 Before an intervention, inspect existing task reminder and lead-notification
@@ -83,5 +89,8 @@ mechanism and the user's intervention policy when those are enabled. If no
 delivery mechanism is configured, return the actionable report to the caller
 and identify the delivery gap.
 
-See [operations](../../docs/operations.md) for scheduling, recovery, and exit
-codes, and [the improvement plan](../../docs/improvement-plan.md) for rollout.
+See [operations](references/operations.md) for scheduling, recovery, and exit
+codes, and [the improvement plan](references/improvement-plan.md) for rollout.
+For a planned naming/hook rollout, use the
+[repository consistency procedure](references/repo-consistency.md). Its validator
+is `scripts/check_naming.py`; hook examples are under `assets/hooks/`.
