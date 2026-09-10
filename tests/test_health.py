@@ -51,7 +51,8 @@ class HealthTests(unittest.TestCase):
         self.pr.update(state='MERGED', mergedAt='2026-09-10T02:00:00Z')
         child = dict(self.pr, number=2, headRefName='feature/b', mergedAt='2026-09-10T01:00:00Z')
         self.snapshot['sources']['a/ci']['data'].append(child)
-        self.snapshot['tracked_sprints'] = {'a': {'AZ/AZ.2': {'branch': 'feature/b', 'integration_branch': 'feature/a'}}}
+        self.snapshot['tracked_sprints'] = {'a': {'AZ/AZ.1': {'branch': 'feature/a'},
+                                                'AZ/AZ.2': {'branch': 'feature/b', 'integration_branch': 'feature/a'}}}
         finding = evaluate(self.snapshot)[0]
         self.assertEqual(finding['routes'], ['team-lead@a', 'operator:telegram'])
         self.assertEqual(finding['severity'], 'serious')
@@ -61,6 +62,13 @@ class HealthTests(unittest.TestCase):
     def test_missing_parent_does_not_prove_wrong_merge_order(self):
         self.pr.update(state='MERGED', mergedAt='2026-09-10T01:00:00Z')
         self.snapshot['tracked_sprints'] = {'a': {'AZ/AZ.1': {'branch': 'feature/a', 'integration_branch': 'missing'}}}
+        self.assertEqual(evaluate(self.snapshot), [])
+
+    def test_final_phase_integration_pr_correctly_merges_after_sprints(self):
+        self.pr.update(state='MERGED', mergedAt='2026-09-10T01:00:00Z')
+        integration = dict(self.pr, number=2, headRefName='integrate/phase-az', mergedAt='2026-09-10T02:00:00Z')
+        self.snapshot['sources']['a/ci']['data'].append(integration)
+        self.snapshot['tracked_sprints'] = {'a': {'AZ/AZ.1': {'branch': 'feature/a', 'integration_branch': 'integrate/phase-az'}}}
         self.assertEqual(evaluate(self.snapshot), [])
 
     def test_total_observability_failure_is_serious(self):
@@ -90,7 +98,8 @@ class HealthTests(unittest.TestCase):
         self.pr.update(state='MERGED', mergedAt='2026-09-10T02:00:00Z')
         child = dict(self.pr, number=2, headRefName='feature/b', mergedAt='2026-09-10T01:00:00Z')
         self.snapshot['sources']['a/ci']['data'].append(child)
-        self.snapshot['tracked_sprints'] = {'a': {'AZ/AZ.2': {'branch': 'feature/b', 'integration_branch': 'feature/a'}}}
+        self.snapshot['tracked_sprints'] = {'a': {'AZ/AZ.1': {'branch': 'feature/a'},
+                                                'AZ/AZ.2': {'branch': 'feature/b', 'integration_branch': 'feature/a'}}}
         incident = evaluate(self.snapshot)[0]['incident_key']
         self.snapshot['interventions'] = {incident: {'team-lead@a': {'status': 'sent'}}}
         self.assertEqual(evaluate(self.snapshot)[0]['pending_routes'], ['operator:telegram'])

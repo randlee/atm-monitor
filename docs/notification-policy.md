@@ -26,6 +26,9 @@ agent investigates the evidence and states its uncertainty.
   parent PR. Use the plan's parent-branch relationship and recorded PR merge
   times; do not infer order from names or array position. Equal timestamps do
   not prove a violation, and a missing parent record is a coverage gap.
+  The parent must be another identified sprint. A final phase integration PR
+  contains its sprint merges and correctly lands after them; it is not a
+  prerequisite sprint PR.
 - **STACK-MAINT-001:** Follow the repository's declared merge-forward/rebase
   rules before starting the next dependent development/fix round. Confirm
   the relevant parent change, round boundary, and missing maintenance before

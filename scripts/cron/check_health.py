@@ -47,9 +47,16 @@ def evaluate(snapshot):
                     findings.append(finding(name, 'stack-maintenance', [branch['name'], branch['head']], [lead],
                                             {'branch': branch['name'], 'head': branch['head'], 'needsRebase': True,
                                              'classification': 'maintenance-needed; rule violation not yet established'}))
-        for sprint in snapshot.get('tracked_sprints', {}).get(name, {}).values():
+        sprints = snapshot.get('tracked_sprints', {}).get(name, {})
+        sprint_branches = {sprint['branch'] for sprint in sprints.values()}
+        for sprint in sprints.values():
+            # A final integrate/phase-* PR contains the sprints and lands last.
+            # Only a base identified as another sprint establishes this order rule.
+            parent_branch = sprint.get('integration_branch')
+            if parent_branch not in sprint_branches or parent_branch == sprint['branch']:
+                continue
             child = by_branch.get(sprint['branch'])
-            parent = by_branch.get(sprint.get('integration_branch'))
+            parent = by_branch.get(parent_branch)
             if not child or not parent or child.get('state') != 'MERGED' or not child.get('mergedAt'):
                 continue
             reason = None
