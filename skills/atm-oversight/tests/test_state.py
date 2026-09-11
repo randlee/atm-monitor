@@ -9,7 +9,7 @@ from unittest.mock import patch
 CRON = Path(__file__).resolve().parents[1] / 'scripts' / 'cron'
 sys.path.insert(0, str(CRON))
 from state_store import BusyError, locked, read_latest, save, snapshots
-from tick import load_config, run_tick
+from tick import load_config, run_tick, jobs
 
 
 class StateTests(unittest.TestCase):
@@ -108,7 +108,7 @@ class TickTests(unittest.TestCase):
         self.assertEqual(state['sources']['a/tasks']['status'], 'unavailable')
         self.assertEqual(len(state['last_good']['a/tasks']['data']), 2)
 
-    def test_event_budget_and_restart_resume(self):
+    def test_all_events_refresh_even_with_legacy_budget_and_unchanged_tasks(self):
         calls = []
         def recorded(kind, **kwargs):
             if kind == 'task-events':
@@ -117,8 +117,8 @@ class TickTests(unittest.TestCase):
         first = run_tick(self.config, self.root / 'state', recorded)
         second = run_tick(self.config, self.root / 'state', recorded)
         third = run_tick(self.config, self.root / 'state', recorded)
-        self.assertEqual(calls, ['t1', 't2'])
-        self.assertEqual(first['deferred_event_tasks'], 1)
+        self.assertEqual(sorted(calls), ['t1', 't1', 't1', 't2', 't2', 't2'])
+        self.assertEqual(first['deferred_event_tasks'], 0)
         self.assertEqual(second['deferred_event_tasks'], 0)
         self.assertTrue(first['fresh_start'])
         self.assertFalse(third['fresh_start'])
@@ -132,7 +132,7 @@ class TickTests(unittest.TestCase):
             return self.collector(kind, **kwargs)
         run_tick(self.config, self.root / 'state', failed)
         run_tick(self.config, self.root / 'state', failed)
-        self.assertEqual(attempts, ['t1', 't1'])
+        self.assertEqual(sorted(attempts), ['t1', 't1', 't2', 't2'])
 
     def test_teams_are_separate_even_when_agent_names_match(self):
         self.config['teams'].append({'name': 'b', 'repo': str(self.root), 'worktrees': []})
@@ -155,6 +155,69 @@ class TickTests(unittest.TestCase):
             path.write_text(json.dumps({'schema_version': 1, 'teams': rows}))
             with self.assertRaises(ValueError):
                 load_config(path)
+
+    def test_more_than_100_tasks_are_all_collected_in_one_tick(self):
+        def collector(kind, **kwargs):
+            if kind == 'tasks':
+                return {'status': 'ok', 'data': [
+                    {'task_id': str(i), 'assignee': 'worker', 'state': 'active'} for i in range(111)]}
+            return self.collector(kind, **kwargs)
+        result = run_tick(self.config, self.root / 'state', collector)
+        snapshot, _ = read_latest(self.root / 'state')
+        self.assertEqual(sum('/task-events/' in key for key in snapshot['sources']), 111)
+        self.assertEqual(result['deferred_event_tasks'], 0)
+        self.assertEqual(result['status'], 'ok')
+
+    def test_overlapping_phase_collection_uses_earliest_start_and_all_worktrees(self):
+        self.config['teams'][0]['projects'] = [
+            {'phase': 'BA', 'start_time': '2026-09-11T00:00:00Z', 'worktrees': ['ba-tree']},
+            {'phase': 'AZ', 'start_time': '2026-09-09T17:00:00-07:00', 'worktrees': ['az-tree']}]
+        specifications = jobs(self.config)
+        ci = next(options for _, kind, options in specifications if kind == 'ci')
+        self.assertEqual(ci['start_time'], '2026-09-09T17:00:00-07:00')
+        self.assertEqual({options['repo'] for _, kind, options in specifications if kind == 'stack'},
+                         {'ba-tree', 'az-tree'})
+
+    def test_duplicate_phase_or_timezone_missing_is_invalid(self):
+        project = {'phase': 'AZ', 'start_time': '2026-09-10T00:00:00Z'}
+        for projects in ([project, project], [dict(project, start_time='2026-09-10')]):
+            self.config['teams'][0]['projects'] = projects
+            path = self.root / 'config.json'
+            path.write_text(json.dumps(self.config))
+            with self.assertRaises(ValueError):
+                load_config(path)
+
+    def test_onboarding_multiple_phases_and_configuring_one_keeps_other_pending(self):
+        plans = self.root / 'docs/plans'
+        plans.mkdir(parents=True)
+        for phase in ('AZ', 'BA'):
+            (plans / ('sprint-' + phase + '.1.md')).write_text(
+                f'---\nphase: {phase}\nsprint: {phase}.1\nbranch: feature/{phase.lower()}1\n---\n')
+        def collector(kind, **kwargs):
+            if kind == 'ci':
+                return {'status': 'ok', 'data': [
+                    {'number': i, 'headRefName': 'feature/' + phase.lower() + '1', 'state': 'OPEN'}
+                    for i, phase in enumerate(('AZ', 'BA'), 1)]}
+            return self.collector(kind, **kwargs)
+        result = run_tick(self.config, self.root / 'state', collector)
+        self.assertEqual({r['phase'] for r in result['onboarding_requests']}, {'AZ', 'BA'})
+        self.config['teams'][0]['projects'] = [{'phase': 'AZ', 'start_time': '2026-09-10T00:00:00Z'}]
+        result = run_tick(self.config, self.root / 'state', collector)
+        self.assertEqual([r['phase'] for r in result['onboarding_requests']], ['BA'])
+        self.config['teams'][0]['projects'].append({'phase': 'BA', 'start_time': '2026-09-11T00:00:00Z'})
+        result = run_tick(self.config, self.root / 'state', collector)
+        self.assertEqual(result['onboarding_requests'], [])
+
+    def test_changed_scope_does_not_relabel_old_ci_as_current(self):
+        run_tick(self.config, self.root / 'state', self.collector)
+        self.config['teams'][0]['projects'] = [{'phase': 'BA', 'start_time': '2026-09-11T00:00:00Z'}]
+        def collector(kind, **kwargs):
+            if kind == 'ci':
+                return {'status': 'unavailable', 'data': None}
+            return self.collector(kind, **kwargs)
+        run_tick(self.config, self.root / 'state', collector)
+        state, _ = read_latest(self.root / 'state')
+        self.assertNotIn('a/ci', state['last_good'])
 
 
 if __name__ == '__main__':

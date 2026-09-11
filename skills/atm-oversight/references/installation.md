@@ -44,10 +44,10 @@ retain their existing documented diagnostic codes.
 | 3 | Another invocation holds the state lock | Empty | Skip this overlap; allow the running job to finish |
 
 Use `--json` for manual diagnostics; it prints a summary even on exits 0 and 3.
-Snapshots retain observations regardless of whether stdout is silent. Bounded
-query coverage alone (for example the 100-PR inventory limit) remains visible
-in snapshots/reports and does not wake a model every poll. Exit 0 therefore
-means no pending action from these checks, not proof of complete coverage.
+Snapshots retain observations regardless of whether stdout is silent.
+Onboarding requests return exit 1 for oversight, not an operator incident.
+Exit 0 means no pending action from these checks, not proof that phase/plan
+associations or QA evidence are complete.
 
 Scripts own the classification. An adapter only routes the returned payload
 through the deployment's ATM or harness transport. Do not use a generic
@@ -66,6 +66,10 @@ have different meanings. No sender is installed by these scripts.
    candidate team's `name`, `repo`, and optional `worktrees`. Paths resolve
    relative to the config file; absolute paths are also accepted. JSON paths
    do not expand shell variables or `~`.
+   Install the separate `oversight-onboarding` skill and use it to add each
+   active phase to the team's `projects` array with an evidence-backed
+   `start_time`. Multiple overlapping phases in the same repo are supported.
+   The empty example array requires onboarding; it is not a production scope.
 4. Select separate activity and phase state directories, such as
    `<state>/activity` and `<state>/phases`. Use stable paths throughout the
    pilot. Temporary storage is acceptable initially; losing it loses history.
@@ -112,6 +116,13 @@ only registration, wake-up, and delivery. See the
 | `SKILL.md` | Handle a finding; answer status requests; verify follow-up | `report.py`, `check_health.py`, `record_intervention.py` |
 | `references/investigation.md` | Explain stalls, repeated QA, or ambiguous evidence | `mine_messages.py` |
 | `references/repo-consistency.md` | Planned rollout of naming and metadata conventions | `check_naming.py` and the sample hooks |
+
+The separate `oversight-onboarding` skill handles `onboarding_requests` from
+the phase monitor. Its `scripts/configure_project.py` writes project settings
+atomically and preserves other simultaneous phases. It does not install jobs
+or deliver incidents. Current automatic discovery requires an open PR joined
+to a parsed sprint plan; discovery from assignments before the first PR remains
+an improvement item. Explicit onboarding can establish settings earlier.
 
 Give the agent the skill directory, interpreter, config, activity-state and phase-state
 paths, allowed team catalog, and deployment notification routes. The main skill

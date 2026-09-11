@@ -15,6 +15,16 @@ are distribution artifacts: propose fixes in atm-monitor, test, then distribute
 the whole bundle. Do not patch a deployed script or policy as a permanent fix.
 Read the deployment's rollout instructions before enabling schedules or sends.
 
+## New phase onboarding
+
+When phase monitoring returns `onboarding_requests`, invoke the separate
+`oversight-onboarding` skill for each request. It verifies the project and saves
+its repository, phase, evidence-backed `start_time`, and worktree settings in
+the deployment config. Do not guess the start time or replace an active scope
+to dismiss a request. If the skill is unavailable, return the pending request
+to the caller. Legacy configs without a start time collect repository history
+and report `unscoped_projects`; they require onboarding before continuous use.
+
 ## Reporting
 
 Run `python scripts/oversight/report.py --state-dir <state> --team <team>`

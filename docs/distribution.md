@@ -15,8 +15,10 @@ atm-oversight/
   tests/                # standalone unit/Git integration tests
 ```
 
-Investigation and repository consistency are procedures within this skill;
-there are no sibling runtime dependencies or separate skill versions to align.
+Investigation and repository consistency are procedures within this skill.
+`skills/oversight-onboarding/` is a separate self-contained skill, with its
+own settings script and tests. It handles newly discovered phases and adds
+independent phase scopes to the deployment's repo-monitoring catalog.
 Run the documented `scripts/...` commands from the installed skill directory.
 Runtime config and monitoring state live outside the installed bundle.
 
@@ -28,6 +30,9 @@ Quiesce scheduled callers before upgrading. Run from the atm-monitor checkout:
 python3 scripts/distribute_skill.py --target /deployment/skills/atm-oversight --archive-dir /deployment-archives
 python3 scripts/distribute_skill.py --target /deployment/skills/atm-oversight --verify
 python3 -m unittest discover -s /deployment/skills/atm-oversight/tests -q
+python3 scripts/distribute_skill.py --source skills/oversight-onboarding --target /deployment/skills/oversight-onboarding --archive-dir /deployment-archives
+python3 scripts/distribute_skill.py --target /deployment/skills/oversight-onboarding --verify
+python3 -m unittest discover -s /deployment/skills/oversight-onboarding/tests -q
 ```
 
 The target and archive must be on the same filesystem. Keep the archive outside
@@ -50,7 +55,8 @@ view; restoring code does not undo external messages or state transitions.
 
 ## Omega-prime rollout
 
-The deployment destination is `hendrix/omega-prime/skills/atm-oversight/`.
+The deployment destinations are `hendrix/omega-prime/skills/atm-oversight/`
+and `hendrix/omega-prime/skills/oversight-onboarding/`.
 Hermes loads it as an external skill directory through the selected profile's
 configuration. No runtime-only copy is maintained. Deployment-specific profile
 documents originate under `deployments/omega-prime/` in this repository.

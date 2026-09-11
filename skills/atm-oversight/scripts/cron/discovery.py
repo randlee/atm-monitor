@@ -5,9 +5,10 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from plan_metadata import read_metadata
+from github_inventory import latest_by_branch
 
 
-def discover(repo, prs, previous=None):
+def discover(repo, prs, previous=None, phases=()):
     plans, errors = {}, []
     for path in sorted((Path(repo) / 'docs' / 'plans').rglob('sprint-*.md')):
         try:
@@ -20,8 +21,8 @@ def discover(repo, prs, previous=None):
             # Historical documents are not automatically active phases.
             continue
     tracked = dict(previous or {})
-    active_phases = set(record['phase'] for record in tracked.values())
-    pr_by_branch = {pr['headRefName']: pr for pr in prs}
+    active_phases = set(record['phase'] for record in tracked.values()) | set(phases)
+    pr_by_branch = latest_by_branch(prs)
     for branch in pr_by_branch:
         matches = plans.get(branch, [])
         if len(matches) == 1:

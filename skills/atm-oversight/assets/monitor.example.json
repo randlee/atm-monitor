@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "timeout_seconds": 15,
-  "event_tasks_per_tick": 10,
   "retain_snapshots": 1000,
   "teams": [
     {
       "name": "atm-dev",
       "repo": "/absolute/path/to/monitored-repository",
+      "projects": [],
       "worktrees": []
     }
   ]

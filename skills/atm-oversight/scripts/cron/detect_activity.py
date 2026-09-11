@@ -10,7 +10,7 @@ import sys
 
 from collectors import collect
 from state_store import BusyError, locked, read_latest, save
-from tick import load_config
+from tick import load_config, project_worktrees
 from scheduled_output import emit
 
 
@@ -58,7 +58,7 @@ def detect(config, state_dir, collector=collect):
                 for team, member in members:
                     if agent['name'] not in {member['name'], member['agent_id']}:
                         continue
-                    roots = [team['repo'], member.get('home_dir'), *team.get('worktrees', [])]
+                    roots = [team['repo'], member.get('home_dir'), *project_worktrees(team)]
                     if any(path_within(agent.get(field), root)
                            for field in ('cwd', 'foreground_cwd') for root in roots):
                         matches.append((team, member))

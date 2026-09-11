@@ -7,6 +7,21 @@ import unittest
 CRON = Path(__file__).resolve().parents[1] / 'scripts' / 'cron'
 sys.path.insert(0, str(CRON))
 from collectors import collect, KINDS, MAX_OUTPUT_BYTES
+from github_inventory import collect_prs, latest_by_branch
+
+
+def connection(rows, cursor=None):
+    return {'nodes': rows, 'pageInfo': {'hasNextPage': cursor is not None, 'endCursor': cursor}}
+
+
+def pr(number, created='2026-09-11T00:00:01Z', checks=None):
+    return {'number': number, 'headRefName': 'feature/' + str(number), 'headRefOid': 'abc',
+            'createdAt': created, 'commits': {'nodes': [{'commit': {'oid': 'abc',
+            'statusCheckRollup': {'contexts': checks or connection([])}}}]}}
+
+
+def page(rows, cursor=None):
+    return {'data': {'repository': {'pullRequests': connection(rows, cursor)}}}
 
 
 class CollectorTests(unittest.TestCase):
@@ -16,7 +31,7 @@ class CollectorTests(unittest.TestCase):
     def test_empty_success_is_not_failure(self):
         for kind, value in [('herdr', {'result': {'agents': []}}),
                             ('roster', {'team': 'alpha', 'members': []}),
-                            ('tasks', []), ('task-events', []), ('ci', [])]:
+                            ('tasks', []), ('task-events', []), ('ci', page([]))]:
             with self.subTest(kind=kind):
                 result = collect(kind, team='alpha', task_id='t1', run=self.response(value))
                 self.assertEqual(result['status'], 'ok', result)
@@ -75,11 +90,92 @@ class CollectorTests(unittest.TestCase):
         result = collect('tasks', team='a', run=self.response([row]))
         self.assertEqual(result['data'], [row])
 
-    def test_limit_boundary_is_explicitly_partial(self):
-        rows = [{'number': 1, 'headRefOid': 'abc', 'headRefName': 'feature/a'}]
-        result = collect('ci', limit=1, run=self.response(rows))
-        self.assertEqual(result['status'], 'partial')
-        self.assertEqual(result['data'], rows)
+    def test_full_page_without_next_cursor_is_complete(self):
+        result = collect('ci', limit=1, run=self.response(page([pr(1)])))
+        self.assertEqual(result['status'], 'ok')
+        self.assertEqual(len(result['data']), 1)
+
+    def test_ci_follows_all_pages_and_preserves_closed_prs(self):
+        pages = [page([dict(pr(3), state='CLOSED')], 'next'), page([pr(2)]),]
+        commands = []
+        def run(cmd, **kwargs):
+            commands.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0, json.dumps(pages.pop(0)), '')
+        result = collect('ci', limit=1, run=run)
+        self.assertEqual(result['status'], 'ok', result)
+        self.assertEqual([row['number'] for row in result['data']], [3, 2])
+        self.assertEqual(result['data'][0]['state'], 'CLOSED')
+        self.assertIn('cursor=next', commands[1])
+
+    def test_more_than_100_prs_have_no_inventory_cap(self):
+        pages = [page([pr(i) for i in range(201, 101, -1)], 'p2'),
+                 page([pr(i) for i in range(101, 1, -1)], 'p3'), page([pr(1)])]
+        rows = collect_prs(lambda cmd: json.dumps(pages.pop(0)))
+        self.assertEqual(len(rows), 201)
+        self.assertEqual(rows[-1]['number'], 1)
+
+    def test_start_time_stops_at_boundary_and_handles_offsets(self):
+        calls = []
+        def query(cmd):
+            calls.append(cmd)
+            return json.dumps(page([pr(3), pr(2, '2026-09-10T17:00:00-07:00'), pr(1)], 'unused'))
+        rows = collect_prs(query, start_time='2026-09-11T00:00:00Z')
+        self.assertEqual([row['number'] for row in rows], [3])
+        self.assertEqual(len(calls), 1)
+
+    def test_check_overflow_is_collected_at_same_commit(self):
+        payloads = [page([pr(1, checks=connection([{'name': 'one'}], 'checks2'))]),
+                    {'data': {'repository': {'object': {'statusCheckRollup': {
+                        'contexts': connection([{'name': 'hidden-failure', 'conclusion': 'FAILURE'}])}}}}}]
+        commands = []
+        def query(cmd):
+            commands.append(cmd)
+            return json.dumps(payloads.pop(0))
+        rows = collect_prs(query)
+        self.assertEqual(len(rows[0]['statusCheckRollup']), 2)
+        self.assertIn('oid=abc', commands[1])
+
+    def test_later_page_failure_does_not_publish_partial_inventory(self):
+        for failure in ('exit', 'timeout', 'graphql', 'malformed'):
+            calls = []
+            def run(cmd, **kwargs):
+                calls.append(cmd)
+                if len(calls) == 1:
+                    return subprocess.CompletedProcess(cmd, 0, json.dumps(page([pr(2)], 'next')), '')
+                if failure == 'timeout':
+                    raise subprocess.TimeoutExpired(cmd, 1)
+                return subprocess.CompletedProcess(cmd, 1 if failure == 'exit' else 0,
+                    json.dumps({'errors': [{'message': 'denied'}]}) if failure == 'graphql' else '{}', 'denied')
+            result = collect('ci', run=run)
+            self.assertEqual(result['status'], 'unavailable', failure)
+            self.assertIsNone(result['data'])
+
+    def test_repeated_cursor_and_duplicate_pr_fail(self):
+        for values in ([page([pr(2)], 'repeat'), page([pr(1)], 'repeat')],
+                       [page([pr(2)], 'next'), page([pr(2)])]):
+            with self.assertRaises(ValueError):
+                collect_prs(lambda cmd: json.dumps(values.pop(0)))
+
+    def test_missing_pagination_or_head_identity_is_not_success(self):
+        bad = pr(1)
+        bad['commits']['nodes'][0]['commit']['oid'] = 'changed'
+        for data in (page([bad]), {'data': {'repository': {'pullRequests': {'nodes': []}}}}):
+            self.assertEqual(collect('ci', run=self.response(data))['status'], 'unavailable')
+
+    def test_branch_reuse_chooses_newest_pr_in_any_order(self):
+        old, new = dict(pr(1), headRefName='feature/reused'), dict(pr(2), headRefName='feature/reused')
+        for rows in ([old, new], [new, old]):
+            self.assertEqual(latest_by_branch(rows)['feature/reused']['number'], 2)
+
+    def test_git_default_is_complete_and_project_start_is_explicit(self):
+        commands = []
+        def run(cmd, **kwargs):
+            commands.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0, '', '')
+        collect('git', run=run)
+        self.assertFalse(any(arg.startswith(('--max-count', '--since')) for arg in commands[0]))
+        collect('git', start_time='2026-09-11T00:00:00Z', run=run)
+        self.assertIn('--since=2026-09-11T00:00:00Z', commands[1])
 
     def test_no_stack_is_absence_only_for_expected_diagnostic(self):
         result = collect('stack', run=self.response(None, 2, 'current branch develop is not part of a stack'))

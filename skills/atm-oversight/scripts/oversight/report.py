@@ -10,6 +10,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'cron'))
 from state_store import read_latest
+from github_inventory import latest_by_branch, parse_start_time
 
 
 def ci_marker(checks):
@@ -55,6 +56,10 @@ def render(snapshot, team, evidence=None, max_age_seconds=600, now=None):
     observed = datetime.fromisoformat(snapshot['observed_at'].replace('Z', '+00:00'))
     age = max(0, int((now - observed).total_seconds()))
     notes = [f'{team} · observed {snapshot["observed_at"]} · age {age}s']
+    settings = next((row for row in snapshot.get('teams', []) if row['name'] == team), {})
+    if settings.get('projects'):
+        notes.append('Phase scopes (including closed/merged PRs): ' + '; '.join(
+            p['phase'] + ' after ' + p['start_time'] for p in settings['projects']))
     if age > max_age_seconds:
         notes.append('STALE SNAPSHOT — run a fresh tick before using this report to intervene.')
     source = snapshot['sources'].get(team + '/ci', {})
@@ -67,11 +72,17 @@ def render(snapshot, team, evidence=None, max_age_seconds=600, now=None):
         raise ValueError('QA evidence belongs to another team')
     if supplied.get('status') in {'partial', 'unavailable'}:
         notes.append('QA evidence is incomplete; additional or newer reports may exist.')
-    prs = {p['headRefName']: p for p in (source.get('data') or [])} if source.get('status') in {'ok', 'partial'} else {}
+    prs = latest_by_branch(source.get('data') or []) if source.get('status') in {'ok', 'partial'} else {}
     rows = []
     tracked = snapshot.get('tracked_sprints', {}).get(team, {})
+    scopes = {project['phase']: project for project in settings.get('projects', [])}
     for identity, sprint in sorted(tracked.items(), key=lambda item: natural_key(item[0])):
+        if scopes and sprint['phase'] not in scopes:
+            continue
         pr = prs.get(sprint['branch'])
+        if pr and sprint['phase'] in scopes:
+            if not pr.get('createdAt') or parse_start_time(pr['createdAt']) <= parse_start_time(scopes[sprint['phase']]['start_time']):
+                pr = None
         label = sprint['sprint']
         dev, qa, ci, findings = '—', '—', '—', '—'
         if pr:

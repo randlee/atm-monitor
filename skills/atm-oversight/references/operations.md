@@ -83,11 +83,12 @@ contain accumulated last-good observations, but they are not a permanent event
 archive. Preserve the directory before a migration or historical export. Temp
 cleanup causes an explicit fresh start; durable history is a SQLite-stage goal.
 
-Task event fetches are incremental by changed task record and bounded by
-`event_tasks_per_tick` (default 10). Deferred tasks are counted in the tick
-output. Successful event fetches survive restarts; failed fetches are retried.
-The initial history catch-up may take several ticks. Do not call a partial
-history complete.
+Every task returned by the team ledger has its complete event history queried
+each tick, including tasks whose state has not changed. New events can arrive
+without a task-state change. The old `event_tasks_per_tick` option is accepted
+but ignored during upgrades; `deferred_event_tasks` remains zero. Failed
+queries stay unavailable and are retried next tick. Up to four queries run
+concurrently. A request timeout is a failure, never a successful truncation.
 
 Exit codes: collectors/tick/report use 0 for success and 2 for failure/degraded
 collection; tick uses 3 for overlap. Mining returns 0 for readable results,
@@ -96,16 +97,31 @@ its JSON status, cursors, remaining revisions, and omitted body count.
 
 ## Report limits
 
-Phase discovery currently joins parsed plan branch fields to a bounded PR
+Phase discovery currently joins parsed plan branch fields to a scoped PR
 inventory, then retains all parsed sprints in each discovered phase. It also
 retains already-discovered phases through quiet periods. Unmapped branches
 are listed in `discovery_errors`. This is a working discovery path; structured
 assignment-driven discovery and explicit phase retirement remain rollout work.
 
-The PR inventory includes recent open, closed, and merged PRs so starting after
-a merge does not erase recent work. It is bounded to 100 results per team in
-the tick. A missing PR is not assumed merged. The report exposes incomplete
-coverage; expand focused PR queries for older retained work. Only matched QA
+Each team/repository has a `projects` array of simultaneously monitored phases.
+Each phase records `phase`, `start_time`, `start_time_evidence`, and optional
+local `worktrees`. Repository collection starts at the earliest configured
+phase start and reads every PR page in that window, including open, closed,
+and merged PRs. Reports select each phase's own boundary. A PR exactly at the
+start boundary is excluded. No PR count cap applies. Git reads all commits
+since the same earliest start on each collected branch, without a count cap.
+Missing phase settings are reported as `unscoped_projects`; legacy configs
+collect repository history until onboarding establishes their scope.
+
+CI uses GraphQL cursor pagination for PRs and for check contexts at each head
+commit. Timeout, malformed pages, repeated cursors, changing head identities,
+or failed later pages invalidate that inventory; prior successful state stays
+available as explicitly old evidence. Timeouts apply per request and the
+16 MiB safety bound applies per response page. They are operational failure
+guards, not reporting filters. Long complete scans can exceed one polling
+interval; overlap protection skips competing ticks.
+
+A missing PR is not assumed merged. Only matched QA
 reports at the exact PR head contribute QA/FND state. Unknown DEV/QA remains
 `—`; a merged PR is evidence of delivered development. Plan status alone is
 not treated as a live completion signal.

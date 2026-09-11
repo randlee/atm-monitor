@@ -95,7 +95,7 @@ becoming gates.
 | 1 | Close structured-discovery gaps: assignments, plan/worktree fields, task IDs, and actual installed tag/query behavior | The same live phase joins correctly through assignment, plan, task events, and PRs; deliberately missing metadata reports a gap |
 | 2 | Enable the selected Telegram/ATM gateway with the explicit notification policy | A controlled failure routes correctly, each delivery has a receipt, unchanged incidents deduplicate, and healthy ticks send nothing |
 | 3 | Prove recovery and continuous operation | Fault tests plus an overnight pilot: source outage, restart, disappearing worktree, partial results, and failed delivery recover without manual state repair |
-| 4 | Add collector-specific polling schedules and focused refresh of retained PRs | Idle teams avoid repeated expensive queries; a slow team does not starve another; old tracked PRs remain current despite bounded discovery pages |
+| 4 | Add collector-specific polling schedules and reliable incremental event cursors | Collect all records within evidence-backed phase scopes; preserve complete history while avoiding redundant fetches; a slow team does not starve another |
 | 5 | Adopt naming and project/assignment schema checks in one active phase | Existing hooks preserved; one template change produces queryable, consistent records and passes the monitor's join tests |
 | 6 | Move state to SQLite at the 5–10 local-team stage | Import JSON, compare reports/history, exercise rollback and recovery, and verify per-team identity isolation |
 
@@ -110,7 +110,16 @@ duration/error/timeout counts, stale-source count, task-event backlog, unresolve
 association count, notification delivery failures, and time from finding to
 acknowledgment/resolution. These expose silent breakage and the time Rand spends
 recovering it. Polling output already carries durations, statuses, timestamps,
-deferred event counts, and discovery diagnostics.
+deferred event counts (zero with full event collection), and discovery diagnostics.
+
+Project onboarding now uses a separate `oversight-onboarding` skill with an
+independent bundle and tests. Multiple phases share a repository while keeping
+separate start times, evidence, and local worktrees. Collection paginates through
+the union of their time windows; reports apply per-phase scope. New open
+PR/plan associations generate onboarding requests. Broader assignment-driven
+discovery before the first PR and deduplicated agent wake-ups remain priorities.
+Phase identity does not include machine identity; remote execution/collection
+will be added later without forcing overlapping phases into separate projects.
 
 Use one span per tick with child spans for each source query and delivery
 attempt. Put task/PR/message IDs on diagnostic spans, not high-cardinality

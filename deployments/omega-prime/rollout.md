@@ -25,6 +25,13 @@ capture is the next stage; acceptance itself does not enable scheduling.
 
 ## Stage 1 test procedure
 
+The collection/onboarding update adds a separate `oversight-onboarding` bundle.
+Before treating collection as scoped, onboard all active phases from evidence.
+Keep overlapping phases as separate entries in each team's `projects` array;
+do not reset older active phases when a new one starts. Re-run both bundles'
+tests and the manual procedure after upgrading. A new bundle does not inherit
+the previous bundle's live acceptance automatically.
+
 Use the installed skill root, Python interpreter, config file, activity-state
 and phase-state paths supplied in the delivery message. Read its `SKILL.md`
 and `references/notification-policy.md` anew; cached legacy operating contracts,

@@ -97,6 +97,14 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('OK', result.stderr)
 
+    def test_onboarding_bundle_runs_without_monitoring_bundle(self):
+        target = self.root / 'skills/oversight-onboarding'
+        distribution.install(ROOT / 'skills/oversight-onboarding', target, self.archive)
+        self.assertEqual(distribution.verify(target)['skill'], 'oversight-onboarding')
+        result = subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', str(target / 'tests'), '-q'],
+                                cwd=self.root, capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
 
 if __name__ == '__main__':
     unittest.main()

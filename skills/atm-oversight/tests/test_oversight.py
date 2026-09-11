@@ -131,6 +131,19 @@ class ReportingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             render(self.snapshot, 'a', {'team': 'other', 'messages': []})
 
+    def test_overlapping_phases_use_their_own_start_boundary(self):
+        self.pr['createdAt'] = '2026-09-10T12:00:00Z'
+        newer = dict(self.pr, number=13, headRefName='feature/ba1-work')
+        self.snapshot['sources']['a/ci']['data'].append(newer)
+        self.snapshot['tracked_sprints']['a']['BA/BA.1'] = {
+            'phase': 'BA', 'sprint': 'BA.1', 'branch': 'feature/ba1-work'}
+        self.snapshot['teams'] = [{'name': 'a', 'projects': [
+            {'phase': 'AZ', 'start_time': '2026-09-10T00:00:00Z'},
+            {'phase': 'BA', 'start_time': '2026-09-11T00:00:00Z'}]}]
+        text = render(self.snapshot, 'a')
+        self.assertIn('[AZ.3]', text)
+        self.assertIn('| BA.1 | — | — | — | — |', text)
+
 
 class DiscoveryTests(unittest.TestCase):
     def test_existing_phase_is_retained_when_no_pr_is_open(self):
@@ -157,6 +170,16 @@ class DiscoveryTests(unittest.TestCase):
             tracked, errors = discover(directory, [{'headRefName': 'feature/new'}])
             self.assertFalse(tracked)
             self.assertEqual(errors[0]['error'], 'no parsed sprint plan; phase unresolved')
+
+    def test_explicitly_onboarded_phase_can_report_before_first_pr(self):
+        with tempfile.TemporaryDirectory() as directory:
+            plans = Path(directory) / 'docs/plans'
+            plans.mkdir(parents=True)
+            (plans / 'sprint-BA.1.md').write_text(
+                '---\nphase: BA\nsprint: BA.1\nbranch: feature/ba1\n---\n')
+            tracked, errors = discover(directory, [], phases=['BA'])
+            self.assertEqual(set(tracked), {'BA/BA.1'})
+            self.assertIsNone(tracked['BA/BA.1']['pr'])
 
     def test_worktrees_support_spaces_and_detached_heads(self):
         data = decode('worktrees', 'worktree /tmp/repo space\0HEAD abc\0branch refs/heads/main\0\0worktree /tmp/other\0HEAD def\0detached\0\0', None)

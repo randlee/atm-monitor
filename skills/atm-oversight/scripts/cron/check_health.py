@@ -9,6 +9,7 @@ from pathlib import Path
 import sys
 
 from state_store import read_latest
+from github_inventory import latest_by_branch
 
 
 def finding(team, kind, subject, routes, evidence, severity='warning'):
@@ -24,7 +25,7 @@ def evaluate(snapshot):
         lead = 'team-lead@' + name
         ci = snapshot['sources'].get(name + '/ci', {})
         prs = ci.get('data') or [] if ci.get('status') in {'ok', 'partial'} else []
-        by_branch = {row['headRefName']: row for row in prs}
+        by_branch = latest_by_branch(prs)
         for pr in prs:
             if pr.get('state') != 'OPEN':
                 continue

@@ -189,6 +189,7 @@ class ScheduledJobTests(unittest.TestCase):
             ({'status': 'ok', 'added_teams': ['a']}, 0, True),
             ({'status': 'degraded', 'partial_sources': ['a/ci']}, 0, True),
             ({'status': 'ok', 'notify': [{'incident_key': 'x'}]}, 1, False),
+            ({'status': 'ok', 'onboarding_requests': [{'phase': 'BA'}]}, 1, False),
             ({'status': 'degraded', 'failed_sources': ['a/ci']}, 2, False),
             ({'status': 'degraded', 'activity_warnings': ['stale']}, 2, False),
             ({'status': 'error', 'error': 'bad config'}, 2, False),

@@ -3,14 +3,17 @@
 Small, tested tools for ATM team oversight. The first stage runs on one
 computer with JSON state; SQLite and multiple computers are later stages.
 
-`skills/atm-oversight/` is the complete distribution unit: instructions, scripts,
-references, configuration/hook examples, and tests. This repository is the
+`skills/atm-oversight/` contains the monitoring runtime. The separate
+`skills/oversight-onboarding/` skill establishes phase settings when new work
+is discovered. Each skill contains its own scripts and tests and is distributed
+as a complete directory. Multiple overlapping phases can share a repository,
+with independent start times and local worktrees. This repository is the
 authoritative source; deployed copies are upgraded together using
 `scripts/distribute_skill.py`. See [distribution](docs/distribution.md).
 
 | Layer | Contents |
 |---|---|
-| Scheduled collection | `skills/atm-oversight/scripts/cron/`: read-only collectors, recoverable JSON snapshots, bounded ticks, routed health findings |
+| Scheduled collection | `skills/atm-oversight/scripts/cron/`: read-only collectors, recoverable JSON snapshots, source timeouts, routed health findings |
 | Oversight agent | `skills/atm-oversight/scripts/oversight/` and `skills/`: sprint reports, message-history investigation, intervention checkpoints |
 | Repository improvements | Naming checks and hooks, consistency conventions, and a prioritized rollout plan |
 

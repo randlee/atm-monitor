@@ -72,7 +72,7 @@ def install(source, target, archive_dir):
                 shutil.copy2(source / relative, destination)
             if inventory(stage) != expected or inventory(source) != expected:
                 raise ValueError('source changed while staging; retry from a stable release')
-            receipt = {'schema_version': 1, 'skill': 'atm-oversight', 'bundle_sha256': bundle_sha,
+            receipt = {'schema_version': 1, 'skill': target.name, 'bundle_sha256': bundle_sha,
                        'installed_at': datetime.now(timezone.utc).isoformat(), 'files': expected}
             (stage / RECEIPT).write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
             verify(stage)

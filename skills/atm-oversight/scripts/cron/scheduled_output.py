@@ -9,7 +9,8 @@ def emit(result, diagnostic=False):
     elif (result.get('status') == 'error' or result.get('failed_sources')
           or result.get('recovery_errors') or result.get('activity_warnings')):
         code = 2
-    elif result.get('notify') or any(item.get('candidate_ids') for item in result.get('unresolved_agents', [])):
+    elif (result.get('notify') or result.get('onboarding_requests')
+          or any(item.get('candidate_ids') for item in result.get('unresolved_agents', []))):
         code = 1
     else:
         code = 0
