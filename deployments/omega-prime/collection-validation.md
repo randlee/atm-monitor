@@ -74,3 +74,19 @@ complete event coverage. atm-core was not modified by this rollout.
 Private snapshots and exact machine configuration stay in ignored local
 validation storage. The installed monitor must continue showing these failures
 until the source is fixed; do not mark them successful to pass acceptance.
+
+## Omega-prime installed retest
+
+Omega-prime reported the installed retest in message
+`01M29B3YWHSBFGB3EP62MS6SX4`. Both receipt hashes matched the delivered bundles;
+116 monitoring tests and 7 onboarding tests passed. The saved snapshot at
+September 11, 22:58:17.364044 UTC independently confirmed 169 sources, 18 known
+ATM event failures, no partial sources, no deferred tasks, and 15 unresolved
+branch associations. Both phase scopes retained their evidence-backed starts.
+
+Four findings had pending team-lead routes: CI failures on #1400 and #1394,
+a conflict on #1394, and AZ.4 stack maintenance. No intervention deliveries
+were recorded. These are observations at the snapshot time, not current
+unqualified claims about the PRs. AZ.1–AZ.4 were reported merged. The retest
+establishes installed-script behavior with the upstream event-coverage gap;
+it does not establish full monitoring acceptance or enable scheduling.
