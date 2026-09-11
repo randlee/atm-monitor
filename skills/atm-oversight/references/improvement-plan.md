@@ -90,6 +90,12 @@ becoming gates.
 
 ## Highest-impact near-term improvements
 
+Live Stage 1 testing on September 11 found ATM event histories containing
+`migrated` and `started` variants rejected by its storage reader. Fix historical
+event compatibility and distinguish schema errors from daemon outages in ATM;
+the monitor must keep reporting affected histories unavailable meanwhile.
+Successful repeat queries for every listed task are required to close this gap.
+
 | Priority | Improvement | Completion evidence |
 |---|---|---|
 | 1 | Close structured-discovery gaps: assignments, plan/worktree fields, task IDs, and actual installed tag/query behavior | The same live phase joins correctly through assignment, plan, task events, and PRs; deliberately missing metadata reports a gap |

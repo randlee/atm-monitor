@@ -31,6 +31,8 @@ Keep overlapping phases as separate entries in each team's `projects` array;
 do not reset older active phases when a new one starts. Re-run both bundles'
 tests and the manual procedure after upgrading. A new bundle does not inherit
 the previous bundle's live acceptance automatically.
+See [collection validation](collection-validation.md) for live findings and the
+ATM event compatibility issue that currently prevents complete event coverage.
 
 Use the installed skill root, Python interpreter, config file, activity-state
 and phase-state paths supplied in the delivery message. Read its `SKILL.md`
