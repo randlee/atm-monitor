@@ -69,6 +69,13 @@ class CollectorTests(unittest.TestCase):
         data = {'error': {'message': 'bad'}, 'result': {'agents': []}}
         self.assertEqual(collect('herdr', run=self.response(data))['status'], 'unavailable')
 
+    def test_unnamed_herdr_terminal_does_not_invalidate_named_agents(self):
+        rows = [{'name': None, 'agent_status': 'idle', 'pane_id': 'p', 'workspace_id': 'w'},
+                {'name': 'worker', 'agent_status': 'working', 'pane_id': 'p2', 'workspace_id': 'w'}]
+        result = collect('herdr', run=self.response({'result': {'agents': rows}}))
+        self.assertEqual(result['status'], 'ok')
+        self.assertEqual(result['data'], rows)
+
     def test_incomplete_rows_do_not_pass(self):
         for kind, data in [('tasks', [{}]), ('ci', [{}]),
                           ('roster', {'team': 'a', 'members': [{'name': 'worker'}]})]:
@@ -161,6 +168,14 @@ class CollectorTests(unittest.TestCase):
         bad['commits']['nodes'][0]['commit']['oid'] = 'changed'
         for data in (page([bad]), {'data': {'repository': {'pullRequests': {'nodes': []}}}}):
             self.assertEqual(collect('ci', run=self.response(data))['status'], 'unavailable')
+
+    def test_empty_commit_connection_preserves_pr_with_unknown_checks(self):
+        historical = dict(pr(1), state='CLOSED', commits={'nodes': []})
+        result = collect('ci', run=self.response(page([pr(2), historical])))
+        self.assertEqual(result['status'], 'ok', result)
+        self.assertEqual(len(result['data']), 2)
+        self.assertIsNone(result['data'][1]['statusCheckRollup'])
+        self.assertEqual(result['data'][1]['check_evidence'], 'head-commit-unavailable')
 
     def test_branch_reuse_chooses_newest_pr_in_any_order(self):
         old, new = dict(pr(1), headRefName='feature/reused'), dict(pr(2), headRefName='feature/reused')

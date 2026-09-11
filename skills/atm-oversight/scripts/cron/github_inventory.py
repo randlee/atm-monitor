@@ -82,8 +82,15 @@ def collect_prs(execute, page_size=100, start_time=None):
             seen.add(raw['number'])
             row = {key: value for key, value in raw.items() if key != 'commits'}
             commits = raw.get('commits', {}).get('nodes')
-            if not isinstance(commits, list) or len(commits) != 1:
+            if not isinstance(commits, list) or len(commits) > 1:
                 raise ValueError('PR missing head commit evidence')
+            if not commits:
+                # A deleted/unavailable commit can leave a valid historical PR
+                # with an empty commit connection. Keep its identity and state,
+                # while making the absent CI evidence explicit.
+                row.update(statusCheckRollup=None, check_evidence='head-commit-unavailable')
+                rows.append(row)
+                continue
             commit = commits[0]['commit']
             if commit['oid'] != row['headRefOid']:
                 raise ValueError('PR head changed during collection')

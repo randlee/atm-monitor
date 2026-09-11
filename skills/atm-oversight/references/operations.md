@@ -114,7 +114,9 @@ Missing phase settings are reported as `unscoped_projects`; legacy configs
 collect repository history until onboarding establishes their scope.
 
 CI uses GraphQL cursor pagination for PRs and for check contexts at each head
-commit. Timeout, malformed pages, repeated cursors, changing head identities,
+commit. A valid historical PR with an empty commit connection remains in the
+inventory with `check_evidence: head-commit-unavailable` and unknown checks.
+Timeout, malformed pages, repeated cursors, changing head identities,
 or failed later pages invalidate that inventory; prior successful state stays
 available as explicitly old evidence. Timeouts apply per request and the
 16 MiB safety bound applies per response page. They are operational failure

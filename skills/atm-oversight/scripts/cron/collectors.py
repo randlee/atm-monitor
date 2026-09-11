@@ -83,8 +83,13 @@ def decode(kind, raw, team):
         result = data.get('result')
         if not isinstance(result, dict) or 'agents' not in result:
             raise ValueError('Herdr response missing result.agents')
-        return require(list_of_objects(result['agents'], 'agents'),
-                       ('name', 'agent_status', 'pane_id', 'workspace_id'))
+        rows = require(list_of_objects(result['agents'], 'agents'),
+                       ('agent_status', 'pane_id', 'workspace_id'))
+        # Herdr also lists terminal panes not yet assigned an agent name.
+        # Preserve them as unmatched observations rather than fail the fleet.
+        if any('name' not in row or (row['name'] is not None and not isinstance(row['name'], str)) for row in rows):
+            raise ValueError('Herdr row missing name field or invalid name')
+        return rows
     if kind == 'roster':
         if not isinstance(data, dict) or data.get('team') != team or 'members' not in data:
             raise ValueError('roster response missing members or mismatched team')
