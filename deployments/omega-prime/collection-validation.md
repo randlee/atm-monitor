@@ -19,8 +19,22 @@ The CI collector returned identical records using page sizes two and ten in
 a test-only September 11 window. The proposed AZ start window, September 9 at
 15:49 UTC, returned 21 PRs. Live testing found merged PR #1386 with an empty
 commit connection: the collector now retains its metadata and marks check
-evidence unavailable. An unnamed Herdr terminal (`name: null`) also now remains
+evidence unavailable. An unnamed Herdr terminal (name null or absent) also now remains
 in the inventory without invalidating named agents. Both have regression tests.
+
+Independent Luna CI checks matched GitHub CLI PR identities and check contexts:
+21 PRs/305 contexts for the AZ window with page sizes 1, 7, and 100; 5 PRs/71
+contexts for the BA window with page sizes 1 and 100. A boundary test excluded
+PR #1397 at its exact creation timestamp. An all-history probe returned 1,197
+PRs and confirmed #1386 as the sole empty head-commit connection.
+
+Onboarding preserved separate AZ and BA entries, four local worktrees, and
+idempotent repeated configuration. Verified phase-start evidence was AZ task
+message `01M23DQCS105AKJKZWERBTMVNY` at September 9, 15:49:00.321784 UTC, and
+BA dev-task `01M273DG8NAD17279PFN7FH1WS` at September 11, 02:05:48.181157 UTC.
+All sampled phase PRs were created later than these boundaries. BA subsequently
+superseded AZ (review message `01M28EG88P265WXJYPN7RVN63E`); the observed overlap
+was historical. Reconcile lifecycle evidence before describing AZ as active.
 
 These observations establish collection behavior, not complete phase discovery
 or permission to start continuous monitoring. Phase start settings must be

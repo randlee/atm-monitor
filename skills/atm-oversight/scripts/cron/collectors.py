@@ -87,8 +87,10 @@ def decode(kind, raw, team):
                        ('agent_status', 'pane_id', 'workspace_id'))
         # Herdr also lists terminal panes not yet assigned an agent name.
         # Preserve them as unmatched observations rather than fail the fleet.
-        if any('name' not in row or (row['name'] is not None and not isinstance(row['name'], str)) for row in rows):
-            raise ValueError('Herdr row missing name field or invalid name')
+        for row in rows:
+            row.setdefault('name', None)
+            if row['name'] is not None and not isinstance(row['name'], str):
+                raise ValueError('Herdr row has invalid name')
         return rows
     if kind == 'roster':
         if not isinstance(data, dict) or data.get('team') != team or 'members' not in data:

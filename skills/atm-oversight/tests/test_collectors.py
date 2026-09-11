@@ -76,6 +76,12 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(result['status'], 'ok')
         self.assertEqual(result['data'], rows)
 
+    def test_herdr_may_omit_name_for_an_unassigned_terminal(self):
+        result = collect('herdr', run=self.response({'result': {'agents': [
+            {'agent_status': 'idle', 'pane_id': 'p', 'workspace_id': 'w'}]}}))
+        self.assertEqual(result['status'], 'ok')
+        self.assertIsNone(result['data'][0]['name'])
+
     def test_incomplete_rows_do_not_pass(self):
         for kind, data in [('tasks', [{}]), ('ci', [{}]),
                           ('roster', {'team': 'a', 'members': [{'name': 'worker'}]})]:
