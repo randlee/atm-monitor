@@ -140,3 +140,15 @@ The active cron must track current state and all observed transformations.
 Source-event history, not differences between two queue snapshots, supplies
 intermediate transitions. Log events before updating derived state/checkpoints;
 replays must be idempotent and outages must preserve explicit coverage gaps.
+
+## Verified metadata-only message detection
+
+Fenix receipt `01M2BD1NRG4J6DAZ3ZX6V0BKT3` supplies the concrete message
+selection contract: union `--workflow-stage plan` with stored-variable
+`--var review_mode=plan` hits, deduplicated by team/message ID. The typed QA
+filter is narrower and misses pre-metadata admissions. Automatic message
+classification must not scan prose/task descriptions. Planning PR opening/merge
+signals remain independent evidence. The skill's phase-discovery reference
+records verified commands, producer migration limits, cursor handling, and
+pending/active repo suppression. These query checks do not implement cron
+ownership or phase-state projections by themselves.

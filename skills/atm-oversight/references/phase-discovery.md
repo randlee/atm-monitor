@@ -9,7 +9,7 @@ it through planning and development. Do not just return agent process states.
 
 The general activity cron runs deterministic checks without an LLM. It resolves
 actor/team/repository from roster and worktree evidence, then checks bounded
-message metadata, rendered planning/development assignments, and Git artifacts
+template-declared message metadata/variables and Git/PR artifacts
 for significant work. Herdr `working`, a question, or a bare branch name is not
 permission to wake Omega-prime. The cron must establish planning/development
 work before issuing a discovery handoff. If evidence is ambiguous, persist the
@@ -23,7 +23,8 @@ A restart must reload ownership and handled evidence IDs, not wake every agent
 again. New evidence for an already active repo belongs to its repo cron.
 
 The first qualifying handoff carries repo/team identity, evidence establishing
-planning/development, phase if resolvable, source timestamps, and a stable
+planning/development from declared metadata or a planning PR, phase if resolvable,
+source timestamps, and a stable
 handoff ID. Omega-prime validates/enriches that evidence and starts monitoring;
 it is not woken merely to find out whether anything significant is happening.
 Preserve inspection checkpoints through outages. Expand backward after a
@@ -36,15 +37,18 @@ qualified handoff to establish actual start times where work predates detection.
 | Open PR whose source/head branch is `plan/*`, such as `plan/phase-ab` | Planning in progress | Qualify substantive work without an LLM; associate phase and hand off only if repo is not already pending/active |
 | That planning PR is merged | Plan ready | Record readiness at `mergedAt`, with PR and accepted revision evidence; active repo cron owns this transition |
 | Planning PR is closed without merge | Closed/cancelled planning proposal; readiness not established | Record closure and seek disposition evidence; do not emit `plan_ready` |
-| New planning branch and actual phase-bound use of plan-hardening templates, with matching repo/phase/plan | Planning is underway | Record phase discovery/start, onboard that phase, and request its repo-specific monitoring job |
-| Explicit phase-planning directive or assignment with unambiguous repo/phase and source references | Substantive work even before a PR or branch exists | Establish phase from that evidence and follow the same handoff; record missing artifacts separately |
+| New planning branch and phase-bound plan-hardening template metadata, with matching repo/phase/plan | Planning is underway | Record phase discovery/start, onboard that phase, and request its repo-specific monitoring job |
+| Template-declared planning assignment/notice with matching repo/team and phase metadata | Substantive work before a PR or branch exists | Qualify planning from metadata and follow the handoff; record missing artifacts separately |
 | Existing phase gets another hardening assignment, correction, or review | Continuation, not a new phase | Append activity/round evidence to the existing phase log |
 
-A planning branch plus template use is a strong concrete example, not a
+A planning branch plus declared template use is a strong concrete example, not a
 mandatory naming convention. Read actual repository conventions. Mere presence
 of `.j2` files is not template use; a rendered assignment, dispatch metadata,
-vars artifact linked to execution, or resulting review supplies that evidence.
-Identify the phase from explicit message/template/plan fields and confirm the
+vars artifact linked to admitted template metadata supplies that evidence.
+Rendered prose alone is not an automatic trigger. Do not match free text, task
+descriptions, or snippets to classify planning. After a qualified trigger,
+message bodies may explain context; they do not replace the metadata gate.
+Identify the phase from declared workflow scope/template variables and plan/PR identity and confirm the
 branch/worktree association. Never guess 'next phase' by incrementing letters.
 Conflicting identities stay unresolved; report what evidence would resolve them.
 
@@ -282,3 +286,50 @@ phase's total hardening count or a new round start. Its body explicitly says
 plan QA remains in flight. Keep `notice` distinct from readiness. The known
 source fact remains in ATM; the phase projection references its ID. Earlier
 untagged records are not retroactively covered by the new structured query.
+
+## Verified planning query recipe (Fenix receipt)
+
+Fenix supplied `01M2BD1NRG4J6DAZ3ZX6V0BKT3`. For message-based detection,
+use declared template metadata only, never message text/task descriptions.
+The separate `plan/*` PR signals still apply. PR #1434 adds metadata to the
+orchestration/hardening templates; Fenix reports his installed copies live,
+with other senders adopting it on reinstall. Do not assume old admissions are
+retroactively typed or that all producers already emit the new metadata.
+
+Query two clauses and **union by message ID within team**, preserving source
+identity and workflow provenance. Apply the saved successful checkpoint and
+follow each clause's `next_cursor` independently before advancing it:
+
+```sh
+ATM_IDENTITY=omega-prime atm search --team atm-dev --workflow-stage plan --since '<checkpoint ISO>' --json
+ATM_IDENTITY=omega-prime atm search --team atm-dev --var review_mode=plan --since '<checkpoint ISO>' --json
+```
+
+Clause 1 covers plan-stage dispatches and reviewer notices. `--type 'plan-*'`
+and `--effective-tag workflow-stage:plan` are equivalent selectors for the
+verified notice, not additional events to count. Clause 2 covers plan QA:
+new typed messages also match `--type qa-task --var review_mode=plan`, but
+keeping the stored-variable selector without `--type` is needed for historical
+untyped assignments. Match phase using declared scope/variables where present;
+legacy hits lacking structured phase identity remain unresolved until associated
+from evidence after qualification. Never extract an invented phase from a tag.
+
+Live checks on September 12 returned one plan-stage hit
+`01M2BCX5F84MF2757DJSPVEKYG` for all three equivalent selectors, zero typed
+plan-QA hits, and one compatible plan-QA hit `01M2BBZ2NW70Y6B8V2J20EHV5D`.
+Neither result had a next cursor. Raw query evidence is retained in the master
+repo's ignored `.local/validation/planning-metadata/` directory.
+
+The new workflow states include plan-scope-review, plan-sprint-hardening,
+plan-consistency-hardening, plan-critical-review, and plan-review-notice. Use
+the declared `workflow.stage=plan` to cover these without enumerating message
+phrases. Source iterations identify particular reviews; notices may summarize
+past work rather than start another iteration. Background reviewer agents do
+not inherently generate ATM events: Fenix reports the revised hardening steps
+require per-round plan-review-notice emissions. Check actual admitted notices
+and preserve gaps for earlier rounds; template installation alone is not proof
+that every past round was recorded.
+
+Do not wake Omega-prime for these hits if repo ownership is already pending or
+active. The active repo cron consumes them and updates state. Metadata reports
+alone do not implement the required registry suppression or automatic projection.
