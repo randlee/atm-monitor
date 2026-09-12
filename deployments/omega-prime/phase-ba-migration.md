@@ -89,3 +89,21 @@ switching and schema remediation remain with Fenix/team-lead.
   boundary has source and regression evidence, not a large live fixture yet.
 - Local validation passed 141 monitoring, 10 onboarding, and 9 distribution
   tests. The next installed retest remains a separate rollout checkpoint.
+
+## Installed upgrade receipt
+
+Source commit `4715588` was distributed after Omega-prime's quiescence receipt.
+Both installed inventories match their receipts; installed tests passed
+141 monitoring and 10 onboarding tests (9 distribution tests also passed).
+
+| Bundle | SHA-256 |
+|---|---|
+| atm-oversight | `fbcf4d7f46328a1e14398770237384e3843e0d3ed64198c2f3ee551256a14699` |
+| oversight-onboarding | `df3e2ae83042bf05b8a345afe3b98225908a8cbbfa0627ef88c8282900460104` |
+
+The config now explicitly uses actor `omega-prime`; both existing phase starts
+and their evidence are preserved. Previous bundles and config were archived.
+The two-pass installed collection/report retest was requested in
+`01M29M65GBDXNJ2TYRMCKJBMV9`; its result is pending. Scheduling and incident
+delivery remain disabled. Fenix received the development fixture summary and
+accepted-contract interpretation in `01M29M4KCHWZF2VPBVPRPC7PKX`.
