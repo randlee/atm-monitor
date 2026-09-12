@@ -229,15 +229,13 @@ def collect(kind, *, repo=None, team=None, task_id=None, limit=None, branch='HEA
                 raise ValueError('event response includes a different task')
             result['status'] = 'ok'
             if kind == 'tasks' and task_surface == 'task':
-                # Current BA.4 --all means all members, not all task states.
-                # The CLI also uses TaskPage::default_bounded() (200 rows).
-                # Preserve actual observations without claiming full history.
-                result['status'] = 'partial'
-                result['coverage'] = {'task_states': 'open-only', 'row_limit': 200,
-                                      'limit_reached': len(result['data']) >= 200}
-                result['error'] = {'code': 'task-history-not-exposed',
-                                   'detail': 'BA.4 task list --all excludes completed tasks and returns at most '
-                                             '200 rows; full-history CLI support is required for complete coverage'}
+                # Queue coverage concerns planned work, not historical events.
+                result['coverage'] = {'scope': 'planned-work-queue', 'task_states': 'open-only',
+                                      'row_limit': 200, 'limit_reached': len(result['data']) >= 200}
+                if len(result['data']) >= 200:
+                    result['status'] = 'partial'
+                    result['error'] = {'code': 'limit-reached',
+                                       'detail': 'task queue returned its 200-row bound; additional queued tasks may exist'}
             elif kind == 'task-events' and task_surface == 'task' and len(result['data']) >= 200:
                 result['status'] = 'partial'
                 result['coverage'] = {'row_limit': 200, 'limit_reached': True}

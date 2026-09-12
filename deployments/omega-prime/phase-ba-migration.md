@@ -18,14 +18,31 @@ because both report the same workspace version.
 | 1.5.x (BA.2) | `atm list --tasks --json` | `atm list --task-events ID --json` | All states and complete histories; no mailbox `--all` flag |
 | Major 1, 1.6.0+ (BA.4) | `atm task list --all --json` | `atm task events ID --json` | Open tasks across members; 200-row list/event limits in the pinned build |
 
-BA.4 is a queue view by design: `--all` selects all members, not closed tasks.
-Fenix confirmed this in `01M29KQK0ZKTKVTBX971N4HFVN`. Full-state queries and
-pagination are the follow-on capability [atm-core #1411](https://github.com/randlee/atm-core/issues/1411),
-with no release assigned yet. Do not misclassify the queue behavior as a BA.4
-defect. The monitor stores observed task IDs durably, keeps querying them after
-they leave the queue, and preserves IDs across outages and phase onboarding.
-Unseen tasks that open and close between polls and potentially truncated event
-histories remain coverage gaps. Returned data is retained even when partial.
+BA.4 is a queue view by design: `--all` selects all members. A valid queue
+below the row bound is complete for its purpose even though it excludes closed
+tasks. The earlier monitor classification of that result as partial was wrong.
+
+Rand's architecture ruling in
+[the #1411 comment](https://github.com/randlee/atm-core/issues/1411#issuecomment-5643631039)
+is authoritative for this consumer:
+
+- **Planned work:** current ordered queues for agents/mailboxes.
+- **Historical evidence:** immutable task events, including state transitions,
+  queue movement, and reassignment. A task's history must not be partitioned
+  by whichever agent currently owns it or reconstructed from queue snapshots.
+- **Interim collection:** retain observed task IDs and query their event logs
+  after closure. Queue disappearance alone does not establish completion;
+  consult the recorded transition/outcome. Never infer historical completeness
+  from successful queue collection.
+- **Event coverage:** unseen tasks that start and finish between polls remain
+  an event-log discovery limitation. Failed or capped event queries remain
+  historical evidence limitations, independent of queue coverage.
+
+[atm-core #1411](https://github.com/randlee/atm-core/issues/1411) now concerns
+team-wide event enumeration and event pagination/cursors. The closed/all-state
+queue-listing request was withdrawn. No release is assigned. Queue results
+are partial only when their own row bound is reached; event results retain
+their own failure/bound status. Reports explicitly distinguish these concerns.
 
 Each team query carries `--team TEAM --as ACTOR`. Doctor and members lack
 `--as`, so their subprocess environment explicitly sets the configured

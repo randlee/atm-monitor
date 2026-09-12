@@ -144,3 +144,19 @@ Populated lifecycle/tag queries, complete stack discovery, and daemon-unavailabl
 roster behavior remain to be verified.
 This survey sent no messages, changed no task state, and performed no stack
 maintenance or source edits in atm-core.
+
+## Queue and historical evidence
+
+The queue answers what is planned; it is not a historical ledger. The immutable
+task event log answers what occurred, including changes of assignee and queue.
+Successful queue collection does not establish complete event coverage, and
+absence from a queue does not establish task completion. Query events for that
+transition. Preserve task identity across reassignment; do not attach historical
+ownership to the current assignee inferred from a queue snapshot.
+
+Current known-ID event polling is an interim discovery mechanism. Team-wide
+event enumeration and event pagination/cursors are tracked in atm-core #1411.
+A task missed between queue polls is an event discovery limitation, not a
+reason to add historical rows to a queue or mark an otherwise complete queue
+partial. This follows Rand's ruling:
+https://github.com/randlee/atm-core/issues/1411#issuecomment-5643631039.

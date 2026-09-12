@@ -68,6 +68,13 @@ def render(snapshot, team, evidence=None, max_age_seconds=600, now=None):
         notes.append('PR coverage is bounded; this report covers the returned PRs and retained sprint identities.')
     elif source.get('status') != 'ok':
         notes.append('CI collection is unavailable; current CI conclusions are omitted.')
+    tasks = snapshot['sources'].get(team + '/tasks', {})
+    if tasks.get('task_query_surface') == 'task':
+        notes.append('Task queue describes planned work. Historical events are queried for known task IDs; '
+                     'tasks created and closed between polls may be missing until team-wide event-log enumeration is available.')
+    if any(key.startswith(team + '/task-events/') and row.get('status') in {'partial', 'unavailable'}
+           for key, row in snapshot['sources'].items()):
+        notes.append('Task event history has failed or bounded queries; historical coverage is incomplete.')
     supplied = evidence or {}
     if supplied and supplied.get('team') != team:
         raise ValueError('QA evidence belongs to another team')

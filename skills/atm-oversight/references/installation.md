@@ -90,12 +90,12 @@ have different meanings. No sender is installed by these scripts.
    the installed bundle against each newly switched patch build. A published
    release is not a prerequisite for query validation or migration.
    Current BA.4 `--all` is an all-members open queue, not historical listing;
-   list and events default to 200 rows. The adapter marks the task inventory
-   partial, retains observed task IDs across outages, and keeps querying their
-   events after closure. Event responses reaching 200 rows remain partial.
-   Tasks created and closed between polls are an explicit discovery gap.
-   Full-state listing and pagination are tracked in atm-core #1411; no release
-   boundary for that capability is assumed.
+   list and events default to 200 rows. A queue below the bound is successful;
+   absence of closed tasks is not incomplete queue coverage. Results reaching
+   the bound remain partial. Historical oversight uses the immutable event
+   log, currently queried by known task IDs retained across outages/closure.
+   Unseen tasks are an event-log discovery gap. Team-wide event enumeration
+   and event paging are tracked in atm-core #1411; no release boundary is assumed.
 4. Select separate activity and phase state directories, such as
    `<state>/activity` and `<state>/phases`. Use stable paths throughout the
    pilot. Temporary storage is acceptable initially; losing it loses history.

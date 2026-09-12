@@ -54,7 +54,7 @@ class AtmContractTests(unittest.TestCase):
         for kind in ('tasks', 'task-events'):
             calls, run = self.runner()
             result = collect(kind, team='a', actor='monitor', task_id='t', run=run)
-            self.assertEqual(result['status'], 'partial' if kind == 'tasks' else 'ok', result)
+            self.assertEqual(result['status'], 'ok', result)
             command = calls[-1][0]
             self.assertEqual(command[:3], ['atm', 'task', 'list' if kind == 'tasks' else 'events'])
             self.assertIn('--all' if kind == 'tasks' else 't', command)
@@ -95,9 +95,14 @@ class AtmContractTests(unittest.TestCase):
     def test_ba4_task_list_and_bounded_event_history_preserve_coverage_gaps(self):
         calls, run = self.runner('1.6.0', [{'team': 'a', 'task_id': 't', 'assignee': 'worker', 'state': 'active'}])
         result = collect('tasks', team='a', actor='monitor', run=run)
-        self.assertEqual(result['status'], 'partial')
+        self.assertEqual(result['status'], 'ok')
+        self.assertIsNone(result['error'])
         self.assertEqual(result['coverage']['task_states'], 'open-only')
         self.assertEqual(len(result['data']), 1)
+        calls, run = self.runner('1.6.0', result['data'] * 200)
+        bounded = collect('tasks', team='a', actor='monitor', run=run)
+        self.assertEqual(bounded['status'], 'partial')
+        self.assertEqual(bounded['error']['code'], 'limit-reached')
         events = [{'team': 'a', 'task_id': 't', 'assignee': 'worker', 'seq': i,
                    'at': 'now', 'event': 'moved'} for i in range(1, 201)]
         calls, run = self.runner('1.6.0', events)
@@ -170,7 +175,7 @@ class AtmContractTests(unittest.TestCase):
             run_tick(config, directory, collector=collector)
             self.assertEqual(set(queried), {'open', 'closed'})
             state, _ = read_latest(directory)
-            self.assertEqual(state['sources']['a/tasks']['status'], 'partial')
+            self.assertEqual(state['sources']['a/tasks']['status'], 'ok')
             self.assertEqual(state['sources']['a/task-events/closed']['status'], 'ok')
             self.assertEqual(state['known_task_ids']['a'], ['closed', 'open'])
 
