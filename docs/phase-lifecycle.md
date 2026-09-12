@@ -5,6 +5,38 @@ Follow-up `01M2BASTQT6B0PMSY29MWAXB07` concerns the same separation.
 This records the implementation requirements; runtime support is not yet
 implemented and existing deployment phases have not been marked complete.
 
+## Expected discovery and planning flow (Rand)
+
+Rand clarified the required oversight behavior on September 12, 2026. This
+flow governs the lifecycle design below; it is not a description of runtime
+capabilities already implemented.
+
+1. A general activity-monitoring cron detects agents doing new work in a
+   repository/team, for example agents working on `atm-core` / `atm-dev`.
+2. Oversight examines message and Git history to recognize that the team is
+   planning its next phase and identify that phase, for example `phase-bb`.
+   Discovery must not depend on an existing phase configuration, development
+   tasks, or an open PR. Agent activity is the trigger; messages and Git supply
+   evidence of the work and its phase identity.
+3. That discovery signals Omega-prime to start active monitoring for the
+   identified phase. This starts an additional repository-specific cron.
+   The general activity monitor continues as the discovery mechanism.
+4. Active phase monitoring begins during planning. It tracks plan hardening,
+   including how many iterations occurred, how long hardening took, and when
+   the plan became ready for development.
+
+Retain the supporting messages, Git revisions, and timestamps so those
+planning milestones and measurements can be explained and checked. A polling
+count is not a hardening-iteration count, and a first-observed timestamp must
+not silently replace an earlier milestone timestamp established by evidence.
+The precise hardening-iteration and readiness evidence rules still need to be
+specified as the full oversight workflow is captured.
+
+The current activity detector and PR/plan-based discovery do not implement
+this entire handoff or these planning metrics. A preconfigured phase scope
+and a generic team watch list are insufficient substitutes. This document
+records the requirement; no additional cron has been installed by this update.
+
 ## Separate lifecycle from team evidence
 
 A phase is a scope of project work, not the team's lifetime. Its completion
