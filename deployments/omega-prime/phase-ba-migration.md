@@ -32,10 +32,14 @@ Each team query carries `--team TEAM --as ACTOR`. Doctor and members lack
 `ATM_IDENTITY` alongside `--team`. Queries use the daemon; no direct ledger
 access or failed-command retry into another schema is permitted.
 
-The release-version boundaries for deployed BA.2 and BA.4 builds must be
-recorded from Fenix's switch receipts, not inferred from an unpublished branch
-version. Before those receipts exist, the live API contract determines the
-query form. Release 1.5.14 / API 1.3.0 was observed on the host before migration.
+The first deployed BA.2 boundary is release **1.5.15 / HTTP API 1.5.0**,
+confirmed by Fenix's switch receipt `01M29N2NHP3987A8DKT7PVYEY3` and a live
+doctor observation. Source: `integrate/phase-ba` at `fd242df7a`, plus version
+bump `7736ec31b`, tag `prerelease/v1.5.15`. BA.4's deployed release boundary
+is still pending its own receipt. Do not infer it from an unpublished branch
+version. The observed HTTP API continues to select the query form, including
+fixture builds sharing a workspace release number. The previous host pair
+was release 1.5.14 / API 1.3.0.
 
 ## Verification and rollout checkpoints
 
@@ -107,3 +111,29 @@ The two-pass installed collection/report retest was requested in
 `01M29M65GBDXNJ2TYRMCKJBMV9`; its result is pending. Scheduling and incident
 delivery remain disabled. Fenix received the development fixture summary and
 accepted-contract interpretation in `01M29M4KCHWZF2VPBVPRPC7PKX`.
+
+## Host 1.5.15 verification
+
+Two complete ticks using the installed bundle and deployment config ran in
+separate validation state at September 12, 2026, 01:53:25 and 01:53:40 UTC.
+Doctor confirmed 1.5.15 / API 1.5.0; both selected the BA.2 `list` interface.
+Fenix's receipt reports the switch at 01:56 UTC, later than receipt arrival
+and these observations; retain that as the reported time, not a verified time.
+
+Both ticks observed 158 tasks, requested all 158 histories, and read 156
+histories containing 1,645 events. They persisted 158 known task IDs, with
+zero partial sources or deferred queries. Two histories failed on both ticks
+and on sequential direct retries (exit 4, bounded mailbox reader error):
+
+- `BA2-TASK-IDENTITY-QUEUE-SOLAR-1789162312`
+- `ba-plan-critical-review`
+
+The original `BA1-FIX-R2-1789162822` reproducer now succeeds with seven events.
+The query migration works on the live host; complete event coverage remains
+unaccepted. No root cause is inferred from the generic reader error. Fenix
+received the reproduction/evidence report in `01M29N5D29QBE99KENXAKFDCAK`;
+Omega-prime received the remaining-failure guidance in
+`01M29N5D2VJWSD60G9CPSCNM2E`. Raw doctor output, snapshots, summary, and direct
+reproducers are retained under `.local/validation/host-1.5.15/`. This independent
+installed-script check does not replace Omega-prime's pending deployment-state
+retest. No host daemon or database was modified.
