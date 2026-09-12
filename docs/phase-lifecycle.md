@@ -20,8 +20,8 @@ capabilities already implemented.
    examines message and Git history to recognize that the team is
    planning its next phase and identify that phase, for example `phase-bb`.
    Discovery must not depend on an existing phase configuration, development
-   tasks, or an open PR. Agent activity is the trigger; messages and Git supply
-   evidence of the work and its phase identity.
+   tasks, or an open PR. Agent activity prompts token-free qualification;
+   substantive message/Git/PR evidence gates the agent handoff.
 3. That discovery signals Omega-prime to start active monitoring for the
    identified phase. This starts an additional repository-specific cron.
    Pending/active repo ownership suppresses further general-activity wakes.
@@ -35,8 +35,14 @@ Retain the supporting messages, Git revisions, and timestamps so those
 planning milestones and measurements can be explained and checked. A polling
 count is not a hardening-iteration count, and a first-observed timestamp must
 not silently replace an earlier milestone timestamp established by evidence.
-The precise hardening-iteration and readiness evidence rules still need to be
-specified as the full oversight workflow is captured.
+For the `plan/*` workflow, Rand specified explicit PR milestones: an open PR
+from a planning source branch establishes planning in progress; merging that
+PR signals plan ready. A closed/unmerged proposal is not ready. The active repo
+cron records creation/merge timestamps and PR/revision identity. Additional
+QA-message approval is not required after that accepted merge. This does not
+mean development has started or the phase is complete. Other branch conventions
+need their own acceptance evidence. Preserve earlier planning evidence and
+account for discovery after both PR milestones already occurred.
 
 The current activity detector and PR/plan-based discovery do not implement
 this entire handoff or these planning metrics. A preconfigured phase scope

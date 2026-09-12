@@ -33,6 +33,9 @@ qualified handoff to establish actual start times where work predates detection.
 |---|---|---|
 | Agent working briefly; Rand asks a few questions; no project artifact or assignment | Ordinary interaction; phase not established | Cron records the inspection locally; no agent wake and no phase cron |
 | Planning-looking branch alone; old template exists; phase name mentioned in passing | Candidate requiring context | Cron checks structured branch/assignment evidence; retain candidate locally, no agent wake yet |
+| Open PR whose source/head branch is `plan/*`, such as `plan/phase-ab` | Planning in progress | Qualify substantive work without an LLM; associate phase and hand off only if repo is not already pending/active |
+| That planning PR is merged | Plan ready | Record readiness at `mergedAt`, with PR and accepted revision evidence; active repo cron owns this transition |
+| Planning PR is closed without merge | Closed/cancelled planning proposal; readiness not established | Record closure and seek disposition evidence; do not emit `plan_ready` |
 | New planning branch and actual phase-bound use of plan-hardening templates, with matching repo/phase/plan | Planning is underway | Record phase discovery/start, onboard that phase, and request its repo-specific monitoring job |
 | Explicit phase-planning directive or assignment with unambiguous repo/phase and source references | Substantive work even before a PR or branch exists | Establish phase from that evidence and follow the same handoff; record missing artifacts separately |
 | Existing phase gets another hardening assignment, correction, or review | Continuation, not a new phase | Append activity/round evidence to the existing phase log |
@@ -186,12 +189,25 @@ not ready, report elapsed time as of the observation. This is wall-clock elapsed
 time, not inferred engineering effort. Retain per-round start/end times and
 report missing endpoints, rather than substituting first polling times.
 
-`plan_ready` requires the repository workflow's readiness/acceptance decision
-for the exact plan revision, with required reviews satisfied. One reviewer PASS,
-a merged planning PR, quiet agents, a round cap, or an empty queue alone does
-not prove readiness. `development_started` requires its own assignment or work
-evidence and timestamp. Record subsequent plan changes/reopened hardening;
-readiness of an older revision does not automatically apply to a new revision.
+For Rand's `plan/*` workflow, the planning PR is a direct lifecycle signal:
+opening the PR establishes planning in progress, and its completed merge
+establishes `plan_ready`. Use the source/head branch (`headRefName`), not a PR
+merely targeting a planning branch. Record the PR identity/URL, branch, phase,
+`createdAt`/`mergedAt`, reviewed head and merge commit when available. A closed
+but unmerged PR is not a completed plan. CI success or reviewer PASS alone
+is not PR completion. Do not impose an additional QA-message requirement after
+the planning PR has merged; its accepted completion is the readiness signal.
+
+Opening time proves planning by that time, not that no earlier planning took
+place. Preserve earlier start evidence when available. If the planning PR is
+first discovered already merged, retain both its creation and merge milestones
+without starting a new hardening round or issuing duplicate activity handoffs.
+Phase completion and development start remain separate from plan readiness.
+`development_started` requires its own assignment or work evidence. A new plan
+revision/reopened planning effort gets its own lifecycle evidence; preserve
+readiness of the older revision without applying it blindly to the new one.
+For a workflow using another branch convention, use its explicit acceptance
+contract rather than assume the `plan/*` rule applies to every docs PR.
 
 A planning report states phase, current evidenced stage, start times, completed
 and in-progress hardening rounds, elapsed hardening time, readiness time/revision

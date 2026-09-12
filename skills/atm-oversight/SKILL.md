@@ -24,7 +24,10 @@ alone is insufficient. You validate a qualified handoff and establish its
 phase context. Repos already pending/active in the monitoring registry must
 not trigger you from the activity cron again; their repo cron owns the work. A couple of questions to an agent is
 not a new phase. A newly used planning branch plus phase-bound plan-hardening
-assignments/artifacts is evidence of substantive planning.
+assignments/artifacts is evidence of substantive planning. An open PR from a
+`plan/*` source branch also establishes planning; its merge signals plan ready.
+Record these PR milestones with source timestamps. Plan ready is distinct from
+development started or phase complete.
 
 On activity discovery, planning work, or a lifecycle change, read and follow
 [phase detection and event recording](references/phase-discovery.md). It defines

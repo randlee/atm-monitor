@@ -8,7 +8,8 @@ description: Establish monitoring settings when a new phase is discovered in a r
 Use this skill when evidence establishes a new planning phase, for an
 `onboarding_requests` item, or for an explicit onboarding request. A PR is not
 required: a phase-bound planning branch and plan-hardening assignments can
-establish planning before development starts. The deployment's `monitor.json` teams array
+establish planning before development starts. An open PR whose source branch
+is `plan/*` is also a direct planning signal; merging it signals plan ready. The deployment's `monitor.json` teams array
 is the current repo-monitoring list: each entry binds one team to one repository.
 An activity observation is a discovery clue, not proof of a phase start time.
 
@@ -32,6 +33,10 @@ when established; backfill earlier evidenced activity without inventing dates.
    defines the PR scope: include PRs created strictly after it, retaining their
    records when closed or merged. If an essential PR predates the proposed
    boundary, resolve the boundary before applying it; do not silently omit it.
+   If PR creation itself supplies the start evidence, retain that PR by identity
+   in the phase evidence: the current strict-after collection filter excludes
+   equality. Record that collector limitation; do not invent an earlier timestamp
+   to work around it or lose the milestone from the phase record.
 4. Save these deployment-owned settings using the script below. Existing
    unrelated options, teams, and phases are preserved. Overlapping phases are
    normal: onboard each independently, never replace an existing phase to add
