@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT / 'scripts' / 'oversight'))
 sys.path.insert(0, str(ROOT / 'scripts' / 'cron'))
 from mine_messages import mine
 from report import ci_marker, render, qa_evidence
+from branch_tree import build_tree, render_tree
 from discovery import discover
 from collectors import decode
 
@@ -143,6 +144,95 @@ class ReportingTests(unittest.TestCase):
         text = render(self.snapshot, 'a')
         self.assertIn('[AZ.3]', text)
         self.assertIn('| BA.1 | — | — | — | — |', text)
+
+    def test_branch_tree_renders_base_siblings_and_nested_pr_bases(self):
+        prs = [
+            {'number': 10, 'headRefName': 'feature/ba2', 'baseRefName': 'integrate/phase-ba',
+             'state': 'OPEN'},
+            {'number': 11, 'headRefName': 'feature/ba3', 'baseRefName': 'feature/ba2',
+             'state': 'OPEN', 'mergeStateStatus': 'BLOCKED'},
+            {'number': 12, 'headRefName': 'feature/ba4', 'baseRefName': 'integrate/phase-ba',
+             'state': 'MERGED'},
+        ]
+        text = render_tree(prs)
+        self.assertLess(text.index('feature/ba2'), text.index('feature/ba3'))
+        self.assertLess(text.index('feature/ba3'), text.index('feature/ba4'))
+        self.assertIn('merge state: BLOCKED', text)
+        self.assertIn('| Branch hierarchy | PR | Status | Action |', text)
+        self.assertIn('　└─', text)
+        self.assertIn('| `　├─ feature/ba2` |', text)
+        self.assertIn('| `　│　　└─ feature/ba3` |', text)
+
+    def test_branch_tree_uses_ordered_stack_and_deduplicates_worktrees(self):
+        prs = [
+            {'number': 20, 'headRefName': 'feature/ba2', 'baseRefName': 'integrate/phase-ba',
+             'state': 'OPEN'},
+            {'number': 21, 'headRefName': 'feature/ba3', 'baseRefName': 'feature/ba2',
+             'state': 'OPEN'},
+        ]
+        payload = {'trunk': 'integrate/phase-ba', 'branches': [
+            {'name': 'feature/ba2', 'needsRebase': False},
+            {'name': 'feature/ba3', 'needsRebase': True},
+        ]}
+        source = {'status': 'ok', 'data': payload}
+        text = render_tree(prs, [source, dict(source)])
+        self.assertEqual(text.count('feature/ba2'), 1)
+        self.assertEqual(text.count('feature/ba3'), 1)
+        self.assertIn('needs-rebase', text)
+
+    def test_branch_tree_preserves_unknown_conflicts_and_cycles(self):
+        prs = [
+            {'number': 30, 'headRefName': 'feature/unknown', 'baseRefName': None, 'state': 'OPEN'},
+            {'number': 31, 'headRefName': 'feature/conflict', 'baseRefName': 'develop', 'state': 'OPEN'},
+            {'number': 32, 'headRefName': 'feature/cycle-a', 'baseRefName': 'feature/cycle-b', 'state': 'OPEN'},
+            {'number': 33, 'headRefName': 'feature/cycle-b', 'baseRefName': 'feature/cycle-a', 'state': 'OPEN'},
+        ]
+        stack = {'trunk': 'develop', 'branches': [
+            {'name': 'feature/other', 'needsRebase': False},
+            {'name': 'feature/conflict', 'needsRebase': False},
+        ]}
+        text = render_tree(prs, [stack])
+        self.assertIn('parent unknown', text)
+        self.assertIn('parent conflict:', text)
+        self.assertIn('cycle detected:', text)
+        self.assertEqual(text.count('`feature/cycle-a`'), 1)
+        self.assertEqual(text.count('`feature/cycle-b`'), 1)
+        tree = build_tree(prs, [stack])
+        self.assertIsNone(tree['feature/cycle-a']['parent'])
+
+    def test_stack_only_pr_identity_and_merged_history(self):
+        stack = {'trunk': 'main', 'branches': [
+            {'name': 'old', 'needsRebase': True, 'isMerged': True},
+            {'name': 'active', 'needsRebase': True, 'pr': {'number': 7, 'state': 'OPEN'}}]}
+        text = render_tree([], [stack])
+        old = next(line for line in text.splitlines() if ' old`' in line)
+        self.assertIn('| MERGED | — |', old)
+        active = next(line for line in text.splitlines() if ' active`' in line)
+        self.assertIn('| #7 |', active)
+        self.assertIn('rebase required', active)
+        self.assertIn('stack head unknown', active)
+
+    def test_closed_pr_has_no_stale_repair_action(self):
+        prs = [{'number': 1, 'headRefName': 'old', 'baseRefName': 'main',
+                'state': 'CLOSED', 'mergeStateStatus': 'BLOCKED'}]
+        text = render_tree(prs, [{'trunk': 'main', 'branches': [
+            {'name': 'old', 'needsRebase': True}]}])
+        self.assertIn('| CLOSED | — |', text)
+        self.assertNotIn('rebase required', text)
+
+    def test_branch_table_escapes_cells_without_changing_branch_identity(self):
+        prs = [{'number': 1, 'headRefName': 'topic|with`tick', 'baseRefName': 'main', 'state': 'OPEN'}]
+        text = render_tree(prs)
+        self.assertIn('topic\\|with`tick', text)
+        self.assertIn('`` ', text)
+        self.assertEqual(len(text.splitlines()), 4)
+
+    def test_deep_parent_chain_does_not_overflow_python_recursion(self):
+        prs = [{'number': i, 'headRefName': f'b{i}', 'baseRefName': f'b{i-1}', 'state': 'OPEN'}
+               for i in range(1, 1050)]
+        tree = build_tree(prs)
+        self.assertEqual(tree['b1049']['parent'], 'b1048')
+        self.assertEqual(len(tree), 1050)
 
 
 class DiscoveryTests(unittest.TestCase):

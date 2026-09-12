@@ -213,10 +213,24 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(result['status'], 'ok')
         self.assertEqual(result['data'], data)
 
-    def test_unmerged_stack_entry_still_requires_head(self):
-        data = {'trunk': 'develop', 'branches': [
-            {'name': 'feature/active', 'isMerged': False, 'needsRebase': True}]}
-        self.assertEqual(collect('stack', run=self.response(data))['status'], 'unavailable')
+    def test_active_stack_entries_can_omit_or_have_null_heads(self):
+        data = {'trunk': 'integrate/phase-ba', 'branches': [
+            {'name': 'feature/ba2-task-identity-queue', 'isMerged': False, 'needsRebase': False},
+            {'name': 'feature/ba3-nudge-invariant', 'isMerged': False, 'needsRebase': True}]}
+        for head in ('omitted', None):
+            with self.subTest(head=head):
+                if head is None:
+                    data['branches'][1]['head'] = None
+                result = collect('stack', run=self.response(data))
+                self.assertEqual(result['status'], 'ok', result)
+                self.assertEqual(result['data'], data)
+
+    def test_invalid_stack_diagnostics_do_not_become_findings(self):
+        for overrides in ({'needsRebase': 'false'}, {'name': ''}, {'head': 123}, {'isMerged': 'false'}):
+            row = {'name': 'feature/a', 'needsRebase': True}
+            row.update(overrides)
+            result = collect('stack', run=self.response({'trunk': 'main', 'branches': [row]}))
+            self.assertEqual(result['status'], 'unavailable')
 
     def test_subprocess_is_noninteractive_and_uses_argv(self):
         def inspect(cmd, **kwargs):

@@ -8,6 +8,7 @@ status table when Rand asks for it.
 |---|---|---|
 | Current CI failure | Identify the PR/head and failing checks; request remediation | Team-lead |
 | Confirmed merge conflict | Identify the affected PR/branch and evidence; request resolution | Team-lead |
+| Open PR blocked, behind its required base, or unstable | Identify the PR and exact merge-state diagnostic; request investigation/remediation | Team-lead |
 | Stack needs routine maintenance | Identify the diagnostic and responsible work | Team-lead |
 | Confirmed stack-maintenance rule violation | Cite the rule, evidence, and corrective action | Team through team-lead **and Rand on Telegram** |
 | Out-of-order branch/PR merge | Cite parent/child relationship and merge evidence | Team through team-lead **and Rand on Telegram** |
@@ -21,6 +22,20 @@ does not establish a serious incident. For ambiguous cases, the oversight
 agent investigates the evidence and states its uncertainty.
 
 ## Stack rules
+
+Inspect local stacks with `gh stack view --json`. Active branches may omit
+their head SHA; retain rebase diagnostics with an explicitly unknown head.
+Missing head evidence must not discard the stack or suppress maintenance
+findings. A branch outside a stack is a valid absence result, and its PR still
+receives the same CI and mergeability checks from the repository PR inventory.
+
+For both stacked and non-stacked open PRs, `CONFLICTING`/`DIRTY` produces a
+conflict finding; `BLOCKED`, `BEHIND`, and `UNSTABLE` produce a team-lead
+attention finding. Preserve the diagnostic: blocked requirements or unstable
+checks do not prove a Git conflict or a stack-rule violation. `UNKNOWN` alone
+is not evidence of a problem; closed and merged PRs do not trigger these routes.
+These findings require team-lead delivery when delivery is enabled; the Stage 1
+pilot continues recording pending routes without sending incident messages.
 
 - **STACK-ORDER-001:** A dependent sprint's PR must merge after its declared
   parent PR. Use the plan's parent-branch relationship and recorded PR merge

@@ -76,7 +76,16 @@ and actionable findings can accompany the table without changing its columns.
 Report requests use the same collected state as scheduled monitoring and may
 retrieve additional evidence on demand, including QA reports and findings.
 The table renderer is deterministic; additional evidence retains its source
-and timestamp, and the model should not invent table status.
+and timestamp, and the model should not invent table status. Alongside the
+sprint table, reports include a `Branch hierarchy | PR | Status | Action`
+table. Its first column uses inline-code `├─`, `└─`, and `│` connectors with
+fullwidth indentation so Markdown preserves the parent/child shape. A PR's
+`baseRefName` supplies its named parent. For a stacked checkout, the ordered
+branches from `gh stack view --json` supply the linear parent evidence because
+the command's `base` values are commit SHAs. Repeated worktree observations of
+the same stack are deduplicated. Rebase flags, merge blockers, unknown parent
+evidence, and conflicting parent evidence remain in the row's Status or Action
+cells; cycles are surfaced and cut before rendering.
 
 ## Design implications to carry into implementation
 

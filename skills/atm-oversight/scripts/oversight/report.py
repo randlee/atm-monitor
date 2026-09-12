@@ -11,6 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'cron'))
 from state_store import read_latest
 from github_inventory import latest_by_branch, parse_start_time
+from branch_tree import render_tree
 
 
 def ci_marker(checks):
@@ -104,6 +105,11 @@ def render(snapshot, team, evidence=None, max_age_seconds=600, now=None):
         rows.append('| ' + ' | '.join((label, dev, qa, ci, findings)) + ' |')
     if not rows:
         notes.append('No sprint associations have been established in this snapshot.')
+    stack_sources = [result for key, result in snapshot['sources'].items()
+                     if key.startswith(team + '/stack/') and result.get('status') == 'ok']
+    branch_table = render_tree(prs.values(), stack_sources)
+    if not branch_table:
+        notes.append('No branch relationships have been established in this snapshot.')
     unresolved = [error for error in snapshot.get('discovery_errors', []) if error.get('team') == team]
     if unresolved:
         notes.append(f'{len(unresolved)} PR branch associations remain unresolved; see snapshot discovery_errors.')
@@ -113,8 +119,11 @@ def render(snapshot, team, evidence=None, max_age_seconds=600, now=None):
             for branch in result['data']['branches']:
                 if branch.get('needsRebase') and not branch.get('isMerged'):
                     notes.append('Stack maintenance: ' + branch['name'] + ' reports needsRebase.')
-    return '\n'.join(notes[:2] + ['','| Sprint | DEV | QA | CI | FND |',
-                                  '|---|---|---|---|---|'] + rows + ['', *dict.fromkeys(notes[2:])])
+    report = notes[:2] + ['', '| Sprint | DEV | QA | CI | FND |',
+                           '|---|---|---|---|---|'] + rows
+    if branch_table:
+        report += ['', branch_table]
+    return '\n'.join(report + ['', *dict.fromkeys(notes[2:])])
 
 
 def natural_key(value):

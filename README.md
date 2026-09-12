@@ -42,8 +42,9 @@ harness setup, [operations](skills/atm-oversight/references/operations.md) for r
 [naming conventions](skills/atm-oversight/references/naming-conventions.md) for repository rollout, and
 [improvement plan](skills/atm-oversight/references/improvement-plan.md) for the next gates and OTel priorities.
 
-Healthy operation stays silent on Telegram. CI failures and conflicts go to
-team-lead; confirmed stack-rule/order violations go to the team and operator;
+Healthy operation stays silent on Telegram. CI failures, conflicts, and explicit
+PR merge-requirement diagnostics go to team-lead for stacked and non-stacked
+branches; confirmed stack-rule/order violations go to the team and operator;
 serious problems escalate to the operator. The kit emits routed findings and
 records confirmed interventions. Notification transport and an unattended
 delivery worker must be integrated with the selected gateway before rollout.

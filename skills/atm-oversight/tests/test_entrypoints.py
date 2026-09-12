@@ -31,7 +31,8 @@ class EntrypointTests(unittest.TestCase):
         paths += list((ROOT / 'scripts' / 'cron').glob('collect_*.py'))
         paths += [ROOT / 'scripts' / 'cron' / name for name in
                   ('tick.py', 'check_health.py', 'detect_activity.py', 'monitor_phase.py')]
-        paths += list((ROOT / 'scripts' / 'oversight').glob('*.py'))
+        paths += [ROOT / 'scripts' / 'oversight' / name for name in
+                  ('report.py', 'mine_messages.py', 'record_intervention.py')]
         for path in paths:
             with self.subTest(path=path.name):
                 result = subprocess.run([sys.executable, str(path), '--help'],

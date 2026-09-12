@@ -36,7 +36,48 @@ class HealthTests(unittest.TestCase):
 
     def test_behind_is_not_conflict_or_rule_violation(self):
         self.pr['mergeStateStatus'] = 'BEHIND'
-        self.assertEqual(evaluate(self.snapshot), [])
+        finding = evaluate(self.snapshot)[0]
+        self.assertEqual(finding['kind'], 'merge-blocked')
+        self.assertEqual(finding['routes'], ['team-lead@a'])
+
+    def test_merge_problems_route_to_lead_with_or_without_stack(self):
+        for in_stack in (False, True):
+            for status in ('DIRTY', 'BLOCKED', 'BEHIND', 'UNSTABLE'):
+                with self.subTest(in_stack=in_stack, status=status):
+                    self.pr['mergeStateStatus'] = status
+                    self.snapshot['sources']['a/stack/worktree'] = {
+                        'status': 'ok', 'data': {'branches': [
+                            {'name': 'feature/a', 'needsRebase': False}]} if in_stack else None}
+                    findings = evaluate(self.snapshot)
+                    self.assertEqual(len(findings), 1)
+                    self.assertEqual(findings[0]['routes'], ['team-lead@a'])
+                    self.assertEqual(findings[0]['pending_routes'], ['team-lead@a'])
+
+    def test_merged_and_closed_prs_do_not_raise_merge_blockers(self):
+        self.pr['mergeStateStatus'] = 'BLOCKED'
+        for state in ('MERGED', 'CLOSED'):
+            self.pr['state'] = state
+            self.assertEqual(evaluate(self.snapshot), [])
+
+    def test_missing_stack_heads_preserve_maintenance_and_deduplicate(self):
+        from collectors import collect
+        import json
+        import subprocess
+        data = {'trunk': 'integrate/phase-ba', 'branches': [
+            {'name': 'feature/ba2-task-identity-queue', 'needsRebase': False, 'isMerged': False},
+            {'name': 'feature/ba3-nudge-invariant', 'needsRebase': True, 'isMerged': False,
+             'pr': {'number': 1402, 'state': 'OPEN'}},
+            {'name': 'feature/merged', 'needsRebase': True, 'isMerged': True}]}
+        source = collect('stack', run=lambda cmd, **kw: subprocess.CompletedProcess(
+            cmd, 0, json.dumps(data), ''))
+        self.snapshot['sources']['a/stack/ba2'] = source
+        self.snapshot['sources']['a/stack/ba3'] = copy.deepcopy(source)
+        findings = evaluate(self.snapshot)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]['kind'], 'stack-maintenance')
+        self.assertEqual(findings[0]['routes'], ['team-lead@a'])
+        self.assertIsNone(findings[0]['evidence']['head'])
+        self.assertEqual(findings[0]['evidence']['pr']['number'], 1402)
 
     def test_stack_maintenance_alone_does_not_notify_operator(self):
         source = {'status': 'ok', 'data': {'branches': [

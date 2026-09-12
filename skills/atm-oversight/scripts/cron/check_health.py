@@ -40,13 +40,25 @@ def evaluate(snapshot):
                 findings.append(finding(name, 'merge-conflict', [pr['number'], pr['headRefOid']], [lead],
                                         {'pr': pr['number'], 'head': pr['headRefOid'],
                                          'mergeable': pr.get('mergeable'), 'mergeStateStatus': pr.get('mergeStateStatus')}))
+            elif pr.get('mergeStateStatus') in {'BLOCKED', 'BEHIND', 'UNSTABLE'}:
+                findings.append(finding(name, 'merge-blocked',
+                                        [pr['number'], pr['headRefOid'], pr['mergeStateStatus']], [lead],
+                                        {'pr': pr['number'], 'url': pr.get('url'),
+                                         'branch': pr['headRefName'], 'head': pr['headRefOid'],
+                                         'mergeable': pr.get('mergeable'),
+                                         'mergeStateStatus': pr['mergeStateStatus'],
+                                         'observed_at': ci.get('observed_at'),
+                                         'classification': 'merge requirements need attention; inspect PR for cause'}))
         for key, source in snapshot['sources'].items():
             if not key.startswith(name + '/stack/') or source.get('status') != 'ok' or not source.get('data'):
                 continue
             for branch in source['data']['branches']:
                 if branch.get('needsRebase') and not branch.get('isMerged'):
-                    findings.append(finding(name, 'stack-maintenance', [branch['name'], branch['head']], [lead],
-                                            {'branch': branch['name'], 'head': branch['head'], 'needsRebase': True,
+                    head = branch.get('head') or None
+                    findings.append(finding(name, 'stack-maintenance', [branch['name'], head], [lead],
+                                            {'branch': branch['name'], 'head': head, 'needsRebase': True,
+                                             'head_evidence': 'available' if head else 'unavailable',
+                                             'pr': branch.get('pr'), 'observed_at': source.get('observed_at'),
                                              'classification': 'maintenance-needed; rule violation not yet established'}))
         sprints = snapshot.get('tracked_sprints', {}).get(name, {})
         sprint_branches = {sprint['branch'] for sprint in sprints.values()}

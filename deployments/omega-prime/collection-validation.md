@@ -90,3 +90,59 @@ were recorded. These are observations at the snapshot time, not current
 unqualified claims about the PRs. AZ.1–AZ.4 were reported merged. The retest
 establishes installed-script behavior with the upstream event-coverage gap;
 it does not establish full monitoring acceptance or enable scheduling.
+
+## Active stack heads and merge requirements
+
+Follow-up request `01M29H57HGCYR32MX60W7C68TG` reported a failure collecting
+`feature/ba3-nudge-invariant`. A read-only check at September 12, 00:46 UTC
+reproduced valid `gh stack view --json` output with no `head` field on either
+active BA.2 or BA.3 entry. The previous decoder incorrectly required a head
+on every unmerged branch and discarded the whole stack.
+
+The decoder now preserves those entries and validates the name and boolean
+diagnostics. Maintenance findings retain an explicitly unknown head rather
+than guessing a commit. The live BA.3 collector returned `ok`, retaining its
+`needsRebase: true` diagnostic. At the same check, PR #1402 was `MERGEABLE`
+with merge state `BLOCKED`; this means merge requirements need attention,
+not that a Git conflict was established.
+
+Both stacked and non-stacked open PRs now route `BLOCKED`, `BEHIND`, and
+`UNSTABLE` diagnostics to team-lead, alongside existing conflict/CI routes.
+Unknown mergeability alone remains silent. Closed/merged PRs do not trigger
+these routes. These are pending findings during Stage 1, not deliveries.
+
+Rand approved a Markdown branch table with hierarchy in its first column.
+The report now nests named PR bases and ordered stack dependencies, retains
+non-stacked siblings, and labels conflicting/unknown parent evidence and
+cycles. A fresh BA-window preview at September 12, 00:51 UTC included nine
+PRs and the BA.3 stack; both source queries succeeded. Monitoring validation
+passed 127 tests, including missing heads, lead routing, tree topology,
+duplicate worktree observations, historical branches, and deep parent chains.
+The installed bundle has not inherited this validation automatically; it
+requires distribution and an installed retest before rollout acceptance.
+
+## Reviewed upstream event patch
+
+Omega-prime supplied a local-fix authorization and patch in
+`01M29H57HGCYR32MX60W7C68TG`. Review confirmed the missing `Migrated` and
+`Started` variants, but the supplied patch also needed SQLite's `event_name`
+mapping and an exhaustive event replay test match updated before the workspace
+could compile. The completed upstream fix is atm-core commit `12f9eb3a0` on
+`codex/task-event-reader-fix`, prepared in an isolated worktree without changing
+the shared develop checkout or running daemon.
+
+Database-backed regression coverage inserts the historical strings directly
+and reads them through both the synchronous task store and bounded async
+ledger reader, including daemon and member actors. Validation passed:
+
+- `cargo test -p atm-storage --lib`: 56 passed.
+- `cargo test -p atm-storage-rusqlite --lib`: 181 passed, 1 ignored.
+- `cargo check --workspace --all-targets` and formatting checks passed.
+
+Rust review considered the typed event contract and error behavior (RBP-001,
+RBP-007). Unknown strings still fail rather than being silently accepted.
+The existing generic unavailable-reader error still obscures decoding failures;
+distinguishing schema failures from outages remains follow-up work. The patch
+does not itself establish installed-daemon compatibility or close
+`omega-prime-bpt`: integrate and deploy the upstream fix, then rerun the two
+reproducers and two complete collection ticks before claiming full coverage.
