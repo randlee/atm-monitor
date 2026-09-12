@@ -243,7 +243,7 @@ skills describe them. Respect the deployment's actual scheduler configuration.
 
 ## Observed ATM boundary (1.5.16)
 
-A live check on September 12 found `atm search --workflow-scope-kind phase`
+An earlier live check on September 12 found `atm search --workflow-scope-kind phase`
 returned no atm-dev hits. Literal searches for 'plan started' and 'plan ready'
 also returned none. Planning messages were searchable, with `workflow: null`.
 This is observed coverage, not proof those concepts never occur elsewhere.
@@ -256,3 +256,29 @@ In this installed CLI, `search` does not accept `--as`; pin `ATM_IDENTITY` in
 the subprocess environment and pass `--team` explicitly. `peek` still exposes
 `--as`. The message wrapper pins actor/team in the environment for search and retains
 explicit `--as` for peek. Failed searches remain unavailable evidence.
+
+A subsequent check found the first structured planning record at
+`2026-09-12T18:08:36.328570Z`: message `01M2BCX5F84MF2757DJSPVEKYG`, template
+`plan-review-notice`, SHA
+`6e12f1ba274cb41d12f6f809649b286769cf8bd6c4be6bbad88b4b58ae047398`.
+Its workflow snapshot supplies phase `BB`, stage `plan`, state
+`plan-review-notice`, transition `notice`, and iteration `2`. Both direct
+queries returned it on ATM 1.5.16:
+
+```sh
+ATM_IDENTITY=omega-prime atm search --team atm-dev --workflow-scope-kind phase --workflow-scope-id BB --workflow-stage plan --limit 20 --json
+ATM_IDENTITY=omega-prime atm search --team atm-dev --effective-tag stage:plan --count --json
+```
+
+This is a concrete deterministic planning signal. Apply new-evidence/time
+checkpoints and pending/active repo suppression before any agent handoff;
+a historical notice is not automatically new work. `template_type` is not the
+entire effective-tag set: inspect the message's workflow/tag provenance.
+Catalog presence alone proves registration, not phase activity. Refresh catalog
+revisions rather than freeze a list of four types or hard-code this one SHA.
+
+The notice is informational and reports prior rounds; iteration `2` is not the
+phase's total hardening count or a new round start. Its body explicitly says
+plan QA remains in flight. Keep `notice` distinct from readiness. The known
+source fact remains in ATM; the phase projection references its ID. Earlier
+untagged records are not retroactively covered by the new structured query.
