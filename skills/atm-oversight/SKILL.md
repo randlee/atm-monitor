@@ -41,6 +41,10 @@ or queue disappearance for a phase state transition.
 
 Follow [phase closure and repository ownership](references/phase-closure.md)
 when the phase's exact `integrate/*` PR closes or you manually close a phase.
+If that PR closed without merging, investigate its discussion and replacement
+work or use Rand's explanation before deciding abandonment/supersession.
+Keep the phase open and monitored while the outcome is unresolved; record the
+PR observation separately from your evidence-backed phase closure decision.
 Use the major lifecycle `activity-detected` → `new-phase-planned` →
 `active-development` → `integration-closed`; manual closure is a separate
 terminal outcome when no integration PR exists. Planning/hardening is inside

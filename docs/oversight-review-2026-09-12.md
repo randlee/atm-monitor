@@ -23,7 +23,8 @@ LLM wake on every detector observation and call that the completed design.
 | activity-detected | Candidate process/roster/Git observation | No agent wake from this alone |
 | new-phase-planned | Qualified structured planning evidence or a phase-associated planning PR/branch | Start one repo job if none is owned; otherwise add this phase to the existing job |
 | active-development | Development assignment/work evidence | Continue the same job |
-| integration-closed | The phase's exact integrate/* source-branch PR closes | Close that phase; preserve merged vs closed-unmerged outcome |
+| integration-closed | The phase's exact integrate/* source-branch PR merges | Close that phase; stop the repo cron only if no other phase is open |
+| Integration PR closed without merge | PR closure observation requiring investigation or Rand's explanation | Retain monitoring until Omega-prime determines continuation, abandonment, or supersession |
 | manually-closed | Omega-prime records actor, reason, time, evidence, and outcome | Close that phase even if no integration PR exists |
 | phase reopened | Explicit evidence referencing prior closure | Resume/reuse monitoring and record the transition |
 

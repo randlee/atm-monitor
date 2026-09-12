@@ -20,17 +20,22 @@ establishes `active-development`.
 
 The integration closure must identify the exact `integrate/*` source/head
 branch, repository and phase, unique PR number/URL, full head SHA, and the PR's
-terminal closed timestamp and outcome. A closed but unmerged PR is terminal
-closure evidence but is not successful integration/merge evidence. An
-abandoned or superseded phase has no required integration PR: Omega-prime may manually close it and
-records the closing actor, reason, timestamp, and supporting evidence.
+terminal closed timestamp and outcome. A merged phase integration PR supplies
+integration completion evidence. A closed, unmerged PR instead requires
+Omega-prime to investigate its discussion, linked replacements, and relevant
+work evidence, or use Rand's explanation. Determine whether the phase was
+abandoned, superseded, or is continuing. It is not automatic phase closure.
+While unresolved, retain the prior phase state and continue repo monitoring.
+Record the PR closure observation separately from the phase decision; an
+unknown abandonment time stays unknown rather than borrowing the PR timestamp.
+An abandoned or superseded phase has no required integration PR: Omega-prime
+may manually close it, recording actor, reason, timestamp, and evidence.
 Preserve the final report evidence and its coverage failures in an immutable
 snapshot outside routine snapshot retention. For each pending incident, retain its owner and next action or record an
 explicit disposition. Acknowledgment alone is not resolution, and closure
 does not silently resolve incidents.
 
-A closed but unmerged integration PR remains separate from successful merge
-evidence. Reopening, superseding, and abandoning a phase are explicit events
+Reopening, superseding, and abandoning a phase are explicit events
 that reference the prior closure or pending disposition.
 
 ## Stop and release ordering

@@ -59,8 +59,9 @@ states are `activity-detected`, `new-phase-planned`, `active-development`, and
 not establish a phase. A qualified handoff establishes `new-phase-planned` and
 starts the repository cron. Accepted development evidence transitions to
 `active-development`. An authoritative integration closure transitions to
-`integration-closed`; closing the integration PR stops the single repository
-cron only when no other phase in that repository remains open. Reopening,
+`integration-closed`; a confirmed phase closure stops the single repository
+cron only when no other phase in that repository remains open. A closed,
+unmerged integration PR requires investigation before deciding phase closure. Reopening,
 supersession, or abandonment is an explicit lifecycle transition and must
 retain the prior closure record.
 
@@ -88,10 +89,14 @@ For an integration closure, evidence is the exact `integrate/*` head branch for
 the phase and repository, joined to its unique PR identity and terminal closed
 outcome. Record the full head SHA, PR URL/number, source branch,
 phase/repository association, and source timestamps. A closed but unmerged PR
-is a terminal closure outcome but is not successful integration/merge evidence;
-retain that distinction in the lifecycle record. An abandoned or superseded
-phase may be closed without an integration PR: the operator records the actor,
-reason, timestamp, and supporting evidence.
+does not automatically close the phase. Omega-prime investigates the PR,
+linked replacement work, and relevant evidence, or uses Rand's explanation to
+determine whether the phase was abandoned, superseded, or continues elsewhere.
+Until resolved, retain the prior phase state and repo monitoring. Record the PR
+closure observation separately from the resulting phase decision, with evidence
+and decision time; do not assume the PR close time is the abandonment time.
+An abandoned or superseded phase may be manually closed without an integration
+PR: Omega-prime records the actor, reason, timestamp, and supporting evidence.
 
 Before retiring routine phase-specific scans, collect and preserve a final
 phase observation with its timestamp, source provenance, PR heads/checks,
