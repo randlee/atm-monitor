@@ -166,3 +166,17 @@ The current scripts do not implement this lifecycle/ownership integration;
 the cron examples above are collection prototypes, not automatic phase handoffs.
 Do not connect watch-list additions directly to agent wakeups: structured
 significance qualification and active-repo suppression remain required work.
+
+## Routine evidence versus notable events
+
+The repo cron tracks every development assignment and relevant activity, plus
+B/C/I (Blocker/Critical/Important) findings for each sprint. Preserve finding
+identity across review rounds so repeated reports do not inflate counts; retain
+reported, open, and resolved counts with source references and coverage gaps.
+Missing reports are unknown coverage, not zero findings.
+
+Collection and count changes alone do not wake an agent. Only a notable event
+requiring action does: follow the [agent wake gate](notification-policy.md),
+including CI failure edges, new merge blockers, and idle agents still owning
+active tasks. Persist observed state and handled/pending event identities so
+unchanged conditions remain silent across ticks and restarts.

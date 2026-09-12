@@ -130,3 +130,12 @@ handoffs, stop failure, and preserved history after pruning/config changes.
 The master changes belong to atm-monitor PR #2. Updating source files is distinct
 from distribution into Hendrix and confirmation that Omega-prime consumed the
 updated skill. Keep deployment receipts and that final briefing explicit.
+
+## Follow-up requirement: phase cron wakes only for notable events
+
+Rand clarified that assignments/activity and per-sprint B/C/I counts are routine
+recording, not LLM triggers. Add deterministic notable-event evaluation and a
+durable wake handoff checkpoint, distinct from delivery state. Acceptance must
+cover CI fail edges, unchanged failure silence, recovery/recurrence, new merge
+blocks, fresh idle-with-active-task evidence, and no wake for ordinary idle or
+routine counts. Existing incident helpers do not complete this wake integration.

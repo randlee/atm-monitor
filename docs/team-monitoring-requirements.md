@@ -82,3 +82,21 @@ Query the ATM daemon for specific task state by task ID or by state.
 |---------|------|--------|---------|
 | 0.2.0 | 2026-09-10 | omega-prime | Removed unapproved features (FR-1 through FR-5, FR-7, NFR-1 through NFR-4, IR-1 through IR-3, Constraints, Out of Scope, Open Questions) |
 | 0.1.0 | 2026-09-10 | omega-prime | Initial draft |
+
+## Notable-event agent triggering (Rand, September 12)
+
+- The phase cron continuously records all development assignments/activity and
+  per-sprint B/C/I findings with evidence, round identity, and coverage.
+- Routine ticks do not invoke an agent. Only notable events requiring action
+  trigger oversight: CI becoming failed, a new merge block/conflict, or an idle
+  agent still owning an active task are examples.
+- Detect edges against durable prior evidence; deduplicate pending/handled
+  handoffs across ticks/restarts independently of outbound delivery receipts.
+- A persistent unchanged condition stays silent. Recovery/recurrence, a
+  material escalation, or an explicit follow-up deadline can justify another
+  wake. Query failure does not establish recovery.
+- Fresh identity and assignment evidence distinguish actionable idle-with-task
+  from ordinary idle. Findings absent from unavailable reports remain unknown.
+
+The deployed skill's notification policy defines this gate. Full runtime wake
+integration and idle-with-active-task detection are outstanding implementation.

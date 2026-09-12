@@ -108,6 +108,13 @@ configured teams; it is not an additional scheduled job.
 
 ## Findings and follow-up
 
+Routine phase ticks track development assignments/activity and per-sprint
+B/C/I findings without waking an agent. Invoke oversight only for a notable
+new event requiring action, such as a CI failure edge, new merge blocker, or
+idle agent with an active task. Follow the durable wake-deduplication rules in
+[notification policy](references/notification-policy.md); an unchanged failure
+or pending notification is not a reason to wake again every tick.
+
 Read [notification policy](references/notification-policy.md) when handling
 findings. Run `python scripts/cron/check_health.py --state-dir <state>` for
 deterministic findings and pending recipients. CI failure and merge conflict

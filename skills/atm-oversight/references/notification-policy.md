@@ -21,6 +21,45 @@ that the team cannot correct. An isolated partial query or ordinary long task
 does not establish a serious incident. For ambiguous cases, the oversight
 agent investigates the evidence and states its uncertainty.
 
+## Agent wake gate (Rand, September 12)
+
+A phase-monitoring cron tick collects and records evidence without invoking an
+agent. Routine development assignments, commits, activity observations, and
+per-sprint B/C/I finding counts update the phase record silently. An agent is
+triggered only when deterministic evaluation detects a notable event requiring
+investigation or intervention, or Rand explicitly requests an agent action.
+
+Qualifying examples:
+
+- CI transitions into failure for the relevant PR/head/check.
+- A new CI/merge requirement block or merge conflict affects the monitored PR.
+- An identified agent becomes idle while still owning an active task, based on
+  fresh assignment/task-event evidence joined to its process identity. Idle
+  without an active assignment is not a trigger. Apply a configured handoff
+  grace interval where needed; do not invent a universal timeout.
+- An integration PR closes without merging: investigate, then escalate to Rand
+  under the phase-closure procedure.
+
+Detect changes relative to durable prior observations and retain stable event
+and incident identities. A persistent CI failure, unchanged merge block, or
+continuing idle condition is not a new event each tick. A verified recovery
+followed by recurrence can trigger again. Unknown/unavailable evidence must not
+be treated as healthy recovery and rearm the same failure. A first observation
+of an existing actionable problem may be handled once as newly observed; do
+not claim a previously healthy state when no baseline exists.
+
+Persist a pending handoff before invoking the agent, and suppress duplicate
+wakes while that handoff is pending or handled. Wake deduplication is separate
+from notification delivery/acknowledgment checkpoints: an undelivered route
+must not automatically wake an LLM every poll. Retry failed handoffs through a
+bounded, recorded retry policy. An unchanged incident can wake again only for
+an explicit follow-up deadline, material escalation, or other new notable event.
+
+The current health/incident helpers provide some incident keys and delivery
+checkpoints, but the durable agent-wake gate and idle-with-active-task rule
+still require runtime integration. Do not wire all `attention` output or all
+new snapshots directly to an agent.
+
 ## Stack rules
 
 Inspect local stacks with `gh stack view --json`. Active branches may omit
