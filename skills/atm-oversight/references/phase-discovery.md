@@ -200,6 +200,21 @@ Link the phase event records supporting each conclusion. The current sprint
 Markdown renderer does not compute these metrics; Omega-prime must derive them
 from recorded evidence without claiming unavailable automation exists.
 
+## Classify milestone reports precisely
+
+- A message saying 'round 2 is running' is `activity_observed` at the message
+  time. It establishes in-progress state, not `hardening_iteration_started` at
+  that time. Keep the actual start unknown until the assignment/start evidence
+  is found; do not compute elapsed hardening from that observation.
+- A message saying 'hardening is complete' and listing five rounds is
+  `hardening_completion_reported`, with the reported round identities. It is
+  not one `hardening_iteration_completed` event. Individual round records,
+  when collected, reconcile with those identities rather than double-counting.
+- Apply `evidence_corrected` records when interpreting the journal. Their
+  payload identifies `supersedes_event_id`, reason, and replacement meaning;
+  never count both the superseded interpretation and its correction. The
+  helper lists raw records; it does not apply semantic corrections for you.
+
 ## Current capability boundary
 
 Activity/roster polling, Git/CI/task collection, message-query tools, onboarding
