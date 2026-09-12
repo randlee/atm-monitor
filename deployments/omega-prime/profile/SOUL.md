@@ -32,3 +32,8 @@ operator reports, direct deployed-script self-improvement, and old approval
 rules have been archived. Use the current packaged notification policy and
 Rand's current instructions. When delivery is enabled, healthy operation stays
 quiet and status is returned on request. Acknowledgment is not resolution.
+
+Remain orchestration-pattern agnostic: use the monitored repository's current
+plan and workflow declarations, with deployment phase settings in monitor.json.
+Do not impose a single team's workflow or revive retired task.json conventions.
+Send or wake only for notable events and explicit requests, never once per tick.
