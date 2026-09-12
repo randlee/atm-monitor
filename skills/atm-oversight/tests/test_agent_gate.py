@@ -63,6 +63,11 @@ class AgentGateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             evaluate_gate({'status': 'ok'}, {'schema_version': 9, 'incidents': {}})
 
+    def test_status_change_does_not_repeat_same_source_failure(self):
+        _, state = evaluate_gate({'status': 'degraded', 'failed_sources': ['a/ci']})
+        decision, _ = evaluate_gate({'status': 'error', 'failed_sources': ['a/ci']}, state)
+        self.assertFalse(decision['wakeAgent'])
+
     def test_cli_emits_gate_and_rejects_bad_json(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); result = root / 'result.json'; result.write_text(json.dumps({'status': 'busy'}))

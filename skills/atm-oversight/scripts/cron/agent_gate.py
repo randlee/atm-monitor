@@ -26,8 +26,7 @@ def _health_event(result):
     if not (failed or partial or recovery or warnings or result.get('status') == 'error'):
         return None
     # Deliberately use source/category identity only: timestamps and prose can churn.
-    identity = ['monitor-health', failed, partial, recovery,
-                result.get('status') == 'error']
+    identity = ['monitor-health', failed, partial, recovery]
     return {'incident_key': _key(identity), 'kind': 'monitor-health',
             'subject': 'monitoring coverage failure', 'severity': 'serious',
             'routes': ['amon@atm-monitor'],

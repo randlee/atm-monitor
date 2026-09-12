@@ -19,6 +19,10 @@ inspect the scheduler failure and reconcile the incident before deliberate
 retry. Never clear all gate state as a routine retry. Delivery checkpoints remain
 separate in the intervention ledger. A corrupt gate is an operational defect,
 not permission to discard deduplication history.
+The bridge reserves one separate `scheduler/gate_failure.json` escalation if the
+main gate is corrupt. Clear that latch only after investigating and repairing
+the fault. If state cannot be written at all, the bridge returns a quiet error
+instead of waking repeatedly; scheduler receipt inspection must detect this.
 
 This bridge schedules collection for configured work. It does not yet implement
 qualified new-phase discovery, repository ownership handoff, automatic closure,

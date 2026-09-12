@@ -4,6 +4,7 @@
 import argparse
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 
 from agent_gate import evaluate_gate, _load, _save
@@ -45,6 +46,23 @@ def main():
         decision = run(args.config, args.state_dir)
     except BusyError:
         decision = {'wakeAgent': False, 'events': [], 'status': 'busy'}
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        # Separate durable latch preserves corrupt gate history for investigation.
+        # A broken incident ledger must not trigger an LLM on every cron tick.
+        decision = {'wakeAgent': False, 'events': [], 'error': str(exc)}
+        latch = args.state_dir / 'scheduler' / 'gate_failure.json'
+        try:
+            latch.parent.mkdir(parents=True, exist_ok=True)
+            with latch.open('x', encoding='utf-8') as out:
+                json.dump({'error': str(exc)}, out)
+                out.flush()
+                os.fsync(out.fileno())
+            decision.update(wakeAgent=True, events=[{
+                'incident_key': 'scheduler-gate-failure', 'kind': 'monitor-health',
+                'routes': ['amon@atm-monitor'], 'evidence': {'error': str(exc)}}])
+        except OSError:
+            # Existing latch or unwritable state: preserve history, remain quiet.
+            pass
     print(json.dumps(decision, sort_keys=True))
     return 0
 

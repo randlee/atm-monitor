@@ -1,4 +1,6 @@
 import json
+import io
+from contextlib import redirect_stdout
 from pathlib import Path
 import sys
 import tempfile
@@ -10,6 +12,20 @@ import hermes_monitor
 
 
 class HermesMonitorTests(unittest.TestCase):
+    def test_corrupt_gate_requests_maintenance_once_without_rewriting_history(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(hermes_monitor, 'run', side_effect=ValueError('corrupt gate')), \
+                patch.object(sys, 'argv', ['monitor', '--config', 'config.json', '--state-dir', tmp]):
+            decisions = []
+            for _ in range(2):
+                out = io.StringIO()
+                with redirect_stdout(out):
+                    self.assertEqual(hermes_monitor.main(), 0)
+                decisions.append(json.loads(out.getvalue()))
+            self.assertTrue(decisions[0]['wakeAgent'])
+            self.assertFalse(decisions[1]['wakeAgent'])
+            self.assertTrue((Path(tmp) / 'scheduler/gate_failure.json').exists())
+
     def test_scheduled_collection_records_receipt_and_deduplicates(self):
         result = {'status': 'ok', 'findings': [{'incident_key': 'ci-1',
                   'pending_routes': ['team-lead@atm-dev']}]}

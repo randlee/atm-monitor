@@ -184,8 +184,8 @@ Documents. The configured-work job now uses `hermes_monitor.py` and
 `agent_gate.py`: routine ticks remain silent, new pending incidents wake once,
 collection failures route to amon, and recovery requires clean coverage before
 recurrence can wake again. All findings retain incident activity even when
-notification delivery is already recorded. Eight gate tests, two orchestration
-tests, and the full 162-test oversight suite pass; distribution's nine tests pass.
+notification delivery is already recorded. Nine gate tests, three orchestration
+tests, and the full 164-test oversight suite pass; distribution's nine tests pass.
 
 This is a configured-work scheduler bridge, not automatic phase discovery or
 closure. Wake reservation precedes agent startup and does not prove delivery;
