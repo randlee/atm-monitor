@@ -5,10 +5,17 @@ description: Establish monitoring settings when a new phase is discovered in a r
 
 # Oversight onboarding
 
-Use this skill for an `onboarding_requests` item from phase monitoring, or an
-explicit request to onboard a phase. The deployment's `monitor.json` teams array
+Use this skill when evidence establishes a new planning phase, for an
+`onboarding_requests` item, or for an explicit onboarding request. A PR is not
+required: a phase-bound planning branch and plan-hardening assignments can
+establish planning before development starts. The deployment's `monitor.json` teams array
 is the current repo-monitoring list: each entry binds one team to one repository.
 An activity observation is a discovery clue, not proof of a phase start time.
+
+Before onboarding, follow `atm-oversight/references/phase-discovery.md` in the
+deployed oversight skill to distinguish casual activity from substantive work
+and record discovery evidence. Record `phase_discovered` and `planning_started`
+when established; backfill earlier evidenced activity without inventing dates.
 
 1. Check that the repository is on that list and that the ATM team, phase plan,
    sprint branches, and worktrees agree. Read the plan and relevant assignment
@@ -33,10 +40,20 @@ An activity observation is a discovery clue, not proof of a phase start time.
    of its computer. Add only locally accessible worktrees today; report remote
    execution as a coverage gap until multi-computer collection is implemented.
 5. Run activity detection and phase monitoring once using the deployment's
-   `atm-oversight` installation. Check that the scoped PRs include the known
-   sprint PRs, all pages were collected, task-event deferral is zero, and source
+   `atm-oversight` installation. For a planning-only phase, zero PRs is expected; verify planning messages,
+   branch/plan evidence, and phase-event recording instead. Where PRs exist,
+   check that scoped PRs include the known sprint PRs, all pages were collected, task-event deferral is zero, and source
    failures remain visible. Return settings, evidence, collected PR count, and
-   remaining gaps to the caller. Onboarding does not enable cron or delivery.
+   remaining gaps to the caller. Hand off a concrete repo-specific schedule
+   specification: repository/team, phase, actor, installed skill/config paths,
+   activity/snapshot/phase-event paths, cadence, and scheduler job identity.
+   Check the durable active/pending repository registry first; reuse its job
+   for an additional phase. Claim a single handoff and suppress repeated general
+   activity wakes. The expected workflow starts the repo-specific cron through the
+   deployment scheduler and records `monitoring_started` only with its receipt
+   and first successful run. The current settings writer does not install a
+   schedule: report a missing scheduler integration as pending work, never as
+   active monitoring. Respect the deployment's current scheduling setting.
 
 Run from this skill directory with the configured Python interpreter:
 

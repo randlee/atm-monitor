@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts' / 'oversight'))
@@ -21,6 +22,17 @@ def hit(mid='m1', when='2026-09-10T01:00:00Z', team='a'):
 
 
 class MiningTests(unittest.TestCase):
+    def test_search_pins_identity_without_unsupported_as_flag(self):
+        with patch('mine_messages.subprocess.run') as run:
+            run.return_value = subprocess.CompletedProcess([], 0, '{"hits": [], "next_cursor": null}', '')
+            result = mine('a', actor='monitor', text='plan-hardening')
+            self.assertEqual(result['status'], 'ok')
+            command = run.call_args.args[0]
+            self.assertNotIn('--as', command)
+            self.assertEqual(command[command.index('--team') + 1], 'a')
+            self.assertEqual(run.call_args.kwargs['env']['ATM_IDENTITY'], 'monitor')
+            self.assertEqual(run.call_args.kwargs['env']['ATM_TEAM'], 'a')
+
     def test_kind_uses_all_catalog_revisions_and_preserves_cursors(self):
         calls = []
         def query(cmd):
@@ -33,8 +45,7 @@ class MiningTests(unittest.TestCase):
         self.assertEqual(len(result['messages']), 2)
         self.assertEqual(result['status'], 'partial')
         self.assertEqual(result['pages'][0], {'template_sha': 'a1', 'next_cursor': 'next'})
-        self.assertTrue(all('--team' in cmd and '--as' in cmd for cmd in calls[1:]))
-        self.assertTrue(all(cmd[cmd.index('--as') + 1] == 'team-lead' for cmd in calls[1:]))
+        self.assertTrue(all('--team' in cmd and '--as' not in cmd for cmd in calls[1:]))
 
     def test_missing_catalog_is_coverage_failure_not_no_work(self):
         result = mine('a', actor='team-lead', kind='dev-task', query=lambda cmd: [])

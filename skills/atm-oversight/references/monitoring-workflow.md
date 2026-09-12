@@ -1,20 +1,39 @@
 # Monitoring workflow
 
 Working brief from Rand's requirements discussion, September 9, 2026.
-This captures intended behavior; polling intervals, intervention thresholds,
+The activity-trigger and state-ownership rules below supersede earlier broad
+activity-wake assumptions. This captures intended behavior; polling intervals, intervention thresholds,
 model selection, and installation details are not yet specified.
+
+## Discovery gate and active monitoring ownership
+
+Follow [phase discovery](phase-discovery.md) for the operational procedure.
+The general activity cron must not wake an agent unless deterministic evidence
+establishes planning or development work. Casual conversations, agent working
+status, and unchanged artifacts do not qualify. A repo already pending/active
+in the durable monitoring registry is suppressed by the general cron; its
+repo-specific cron owns evidence collection and additional-phase discovery.
+
+The active repo cron maintains current state and appends every observed activity
+and state transition to the phase event log. Record events before advancing
+source checkpoints/current-state projections, deduplicate repeated observations,
+and recover state by replay after interruption. Snapshots alone do not satisfy
+transition history. Queue contents remain planned work; immutable source events
+and evidenced decisions establish what occurred.
 
 ## Intended operation
 
 1. Cron polls Herdr regularly on the local computer and detects agent activity.
-2. Monitoring associates discovered agents with ATM team membership and work.
+2. Deterministic monitoring associates agents with ATM team membership and work
+   and qualifies significant planning/development evidence before waking Omega-prime.
    Tagged `dev-task`, `fix-task`, `qa-task`, and `qa-report` messages provide
    focused queries for assignments and reports. Worktree paths are present in
    task assignments and the project plan, linking activity to sprint work.
 3. Work is organized into phases containing multiple sprints. Each sprint has
    a separate worktree and branch. When activity establishes that a phase has
    started, monitoring tracks its sprints, CI, and stacked PR maintenance.
-4. Small, reliable scripts do the collection and routine checks. Cron owns
+4. A separate repo-specific cron owns currently active repositories and their
+   phase state transitions. Small, reliable scripts do collection and routine checks. Cron owns
    ongoing execution. An inexpensive model, preferably local, performs a
    small amount of reasoning and escalates issues through ATM or Telegram.
 5. Rand can ask the oversight agent for a report through Telegram. The report

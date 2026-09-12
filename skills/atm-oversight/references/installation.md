@@ -5,7 +5,18 @@ run on a scheduler; an oversight agent handles findings and report requests.
 The initial implementation uses local JSON state and a configured catalog of
 candidate teams and repositories.
 
-## The two scheduled jobs
+## Required scheduling architecture
+
+The general activity cron must qualify planning/development evidence without
+waking an LLM for casual activity, and suppress pending/active repo handoffs.
+A separate repo-specific active cron owns state tracking, phase-event emission,
+and discovery of later phases for that repo. See
+[phase-discovery.md](phase-discovery.md) for requirements and ownership recovery.
+These scheduling/gating integrations are not yet implemented by the two generic
+entrypoints below. Their successful runs alone do not prove the required
+handoff or transition logging works.
+
+## Current two entrypoints
 
 | Job | Inputs | Persistent result | When it needs oversight |
 |---|---|---|---|
@@ -21,7 +32,8 @@ review; they are not silently enrolled or repeatedly sent to oversight.
 
 Phase monitoring reads that list and makes queries scoped to each watched
 team. One invocation currently loops over watched teams; separate per-team
-scheduler jobs are not required. It retains discovered phases through quiet
+scheduler jobs are not provisioned by this implementation; the required
+repo-specific ownership model remains integration work. It retains discovered phases through quiet
 periods. Activity disappearing does not establish phase completion or retire
 the watch entry. If detection is stale or missing, it checks all configured
 teams; unavailable roster evidence also keeps the affected team eligible.

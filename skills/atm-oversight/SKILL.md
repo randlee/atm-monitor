@@ -1,6 +1,6 @@
 ---
 name: atm-oversight
-description: Report on monitored ATM phases and sprints, interpret collection health and CI/stack findings, and route focused investigations using atm-monitor state.
+description: Detect significant project activity, establish phase planning and development state from evidence, record phase events, and report or investigate monitored ATM work.
 ---
 
 # ATM oversight
@@ -15,6 +15,24 @@ are distribution artifacts: propose fixes in atm-monitor, test, then distribute
 the whole bundle. Do not patch a deployed script or policy as a permanent fix.
 Read the deployment's rollout instructions before enabling schedules or sends.
 
+## Your responsibility: discover and follow the work
+
+Do not wait for an existing PR or phase configuration to tell you planning has
+started. The general activity cron must establish planning/development work
+from structured message and Git evidence before waking you; agent activity
+alone is insufficient. You validate a qualified handoff and establish its
+phase context. Repos already pending/active in the monitoring registry must
+not trigger you from the activity cron again; their repo cron owns the work. A couple of questions to an agent is
+not a new phase. A newly used planning branch plus phase-bound plan-hardening
+assignments/artifacts is evidence of substantive planning.
+
+On activity discovery, planning work, or a lifecycle change, read and follow
+[phase detection and event recording](references/phase-discovery.md). It defines
+significance, your next action, hardening-round counting, phase-event logging,
+and the general-cron → repo-specific-cron handoff. Record evidence before
+reporting state or metrics. Never substitute a watch-list entry, an idle agent,
+or queue disappearance for a phase state transition.
+
 ## New phase onboarding
 
 When phase monitoring returns `onboarding_requests`, invoke the separate
@@ -27,6 +45,8 @@ and report `unscoped_projects`; they require onboarding before continuous use.
 
 ## Reporting
 
+Read the phase event log for planning/lifecycle status and hardening metrics.
+The current report script supplies sprint/branch tables, not those metrics.
 Run `python scripts/oversight/report.py --state-dir <state> --team <team>`
 from the skill directory. Return its `Sprint | DEV | QA | CI | FND` table. Preserve
 freshness and coverage notes; `—` means evidence is missing, not success.

@@ -11,16 +11,22 @@ Rand clarified the required oversight behavior on September 12, 2026. This
 flow governs the lifecycle design below; it is not a description of runtime
 capabilities already implemented.
 
-1. A general activity-monitoring cron detects agents doing new work in a
+1. A general activity-monitoring cron uses deterministic checks to detect
+   agents doing new work in a
    repository/team, for example agents working on `atm-core` / `atm-dev`.
-2. Oversight examines message and Git history to recognize that the team is
+2. The cron checks structured message and Git evidence to establish substantive
+   planning/development before waking Omega-prime. Casual questions or agent
+   activity alone do not trigger an agent. After qualification, oversight
+   examines message and Git history to recognize that the team is
    planning its next phase and identify that phase, for example `phase-bb`.
    Discovery must not depend on an existing phase configuration, development
    tasks, or an open PR. Agent activity is the trigger; messages and Git supply
    evidence of the work and its phase identity.
 3. That discovery signals Omega-prime to start active monitoring for the
    identified phase. This starts an additional repository-specific cron.
-   The general activity monitor continues as the discovery mechanism.
+   Pending/active repo ownership suppresses further general-activity wakes.
+   The repo-specific cron owns discovery of additional phases for that repo;
+   the general activity monitor continues checking other eligible repos.
 4. Active phase monitoring begins during planning. It tracks plan hardening,
    including how many iterations occurred, how long hardening took, and when
    the plan became ready for development.
@@ -114,3 +120,17 @@ A Luna review confirmed the relevant code paths and baseline suites (141
 monitoring tests and 10 onboarding tests). The existing watch list deliberately
 persists previously observed teams; that behavior is not a phase-completion
 signal. Guidance was sent to Omega-prime in `01M2BATY4CTZDX5E9ZJNHATT6B`.
+
+## Operational detection and event-log contract
+
+The maintained deployment skill procedure is
+[phase discovery and event recording](../skills/atm-oversight/references/phase-discovery.md).
+It specifies significance gating, durable pending/active repo ownership,
+planning evidence and round identity, state/event recording, and capability gaps.
+The phase-event writer provides durable local recording; automatic emission
+and state projection in the active repo cron remain runtime integration work.
+
+The active cron must track current state and all observed transformations.
+Source-event history, not differences between two queue snapshots, supplies
+intermediate transitions. Log events before updating derived state/checkpoints;
+replays must be idempotent and outages must preserve explicit coverage gaps.

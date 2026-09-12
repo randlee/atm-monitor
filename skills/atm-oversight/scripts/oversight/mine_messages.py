@@ -23,9 +23,13 @@ def parse_escalation_summary(text):
     return match.groupdict() if match else None
 
 
-def invoke(command, repo=None, timeout=15):
+def invoke(command, repo=None, timeout=15, *, actor=None, team=None):
     env = os.environ.copy()
     env['GIT_TERMINAL_PROMPT'] = '0'
+    if actor is not None:
+        env['ATM_IDENTITY'] = actor
+    if team is not None:
+        env['ATM_TEAM'] = team
     p = subprocess.run(command, cwd=repo, capture_output=True, text=True,
                        encoding='utf-8', errors='replace', timeout=timeout, env=env)
     if p.returncode:
@@ -38,10 +42,12 @@ def invoke(command, repo=None, timeout=15):
 def mine(team, *, actor, kind=None, template_sha=None, cursor=None, text=None,
          task_id=None, sprint=None, sender=None, agent=None, tag=None,
          effective_tag=None, since=None, until=None, limit=20,
-         with_bodies=False, max_bodies=10, max_templates=8, query=invoke):
+         with_bodies=False, max_bodies=10, max_templates=8, query=None):
     if (not isinstance(team, str) or not team.strip() or not isinstance(actor, str) or not actor.strip()
             or not 1 <= limit <= 1000 or not 1 <= max_templates <= 100 or not 0 <= max_bodies <= 100):
         raise ValueError('invalid team or query budget')
+    if query is None:
+        query = lambda command: invoke(command, actor=actor, team=team)
     if kind and kind not in KINDS:
         raise ValueError('unsupported work-record kind')
     if cursor and kind and not template_sha:
@@ -67,7 +73,7 @@ def mine(team, *, actor, kind=None, template_sha=None, cursor=None, text=None,
         command = ['atm', 'search']
         if text:
             command += [text]
-        command += ['--as', actor, '--team', team, '--limit', str(limit), '--json']
+        command += ['--team', team, '--limit', str(limit), '--json']
         filters = [('--template-sha', sha), ('--cursor', cursor), ('--from', sender),
                    ('--agent', agent), ('--tag', tag), ('--effective-tag', effective_tag),
                    ('--since', since), ('--until', until)]
@@ -143,7 +149,7 @@ def main():
     try:
         if timeout <= 0:
             raise ValueError('timeout must be positive')
-        result = mine(**args, query=lambda command: invoke(command, repo, timeout))
+        result = mine(**args, query=lambda command: invoke(command, repo, timeout, actor=args['actor'], team=args['team']))
     except (ValueError, OSError, subprocess.TimeoutExpired) as exc:
         result = {'status': 'unavailable', 'errors': [{'error': str(exc)}]}
     print(json.dumps(result, indent=2))
