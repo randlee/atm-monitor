@@ -17,6 +17,14 @@ Read the deployment's rollout instructions before enabling schedules or sends.
 
 ## Your responsibility: discover and follow the work
 
+Act from this skill and the evidence without requiring Rand to direct each
+monitoring step. Excessive, duplicate, or unjustified agent triggers are
+monitoring defects: escalate to `amon@atm-monitor` with wake/event identities,
+times, reasons, prior handling state, and deployed revision. The maintainer
+owns fixes to master scripts/skills and redistribution. Do not make Rand debug
+wake frequency or patch deployed copies yourself. Follow the deduplicated
+maintainer route in [notification policy](references/notification-policy.md).
+
 Do not wait for an existing PR or phase configuration to tell you planning has
 started. The general activity cron must establish planning/development work
 from template-declared message metadata and Git/PR evidence before waking you; agent activity

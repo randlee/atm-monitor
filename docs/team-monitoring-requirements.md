@@ -119,3 +119,16 @@ An explicit report request is independent of the cron notable-event wake gate.
 The current report.py renders discovered sprint evidence, not this complete
 phase projection. Full planned-sprint inventory, lifecycle/metrics/findings
 projection, and retained closed-phase reports remain implementation work.
+
+## Operational ownership and excessive triggering
+
+Omega-prime must act from maintained skills without step-by-step direction from
+Rand. Excessive/unjustified/duplicate wakes escalate to the atm-monitor
+maintainer (`amon@atm-monitor`), who diagnoses and fixes scripts/skills and
+verifies deployment. Include stable wake/event IDs, reason, timing, repository,
+phase, previous handling state, and bundle version. Deduplicate the defect
+report to avoid an escalation loop. Do not suppress the required monitoring job
+or route tooling diagnosis back to Rand. Project decisions remain separate.
+
+Durable wake auditing and automatic excessive-trigger detection are remaining
+runtime requirements; manual observed-defect reporting uses the same route.

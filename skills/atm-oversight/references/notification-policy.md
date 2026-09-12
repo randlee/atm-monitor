@@ -13,6 +13,7 @@ status table when Rand asks for it.
 | Confirmed stack-maintenance rule violation | Cite the rule, evidence, and corrective action | Team through team-lead **and Rand on Telegram** |
 | Out-of-order branch/PR merge | Cite parent/child relationship and merge evidence | Team through team-lead **and Rand on Telegram** |
 | Serious problem | Explain impact, affected work, prior attempts, and needed decision/action | Rand on Telegram; involve the responsible team as appropriate |
+| Excessive, duplicate, or unjustified oversight wakes; unclear operational skill instructions | Report the monitoring defect with wake/event evidence for a master script/skill fix | atm-monitor maintainer (`amon@atm-monitor`) |
 | Healthy operation | Record locally; no unsolicited operator report | None |
 
 Serious problems include loss of reliable monitoring for a team, lost or
@@ -124,3 +125,25 @@ The monitoring kit does not yet include a Telegram transport or an unattended
 delivery worker. Select and validate the deployment's gateway and complete the
 pilot before enabling automatic delivery. Healthy tick logs stay local even
 after delivery is enabled.
+
+## Monitoring defects belong to the maintainer
+
+Omega-prime follows the deployed skills and the event-driven handoff; Rand
+should not have to tell him what to do on each wake. If a wake has no new
+notable event, duplicates a pending/handled event, or repeated triggering
+indicates faulty qualification/deduplication, escalate the defect to the
+atm-monitor maintainer (`amon@atm-monitor`). Include repo/phase, scheduler job,
+wake/event IDs and timestamps, trigger reason, prior handled/pending state,
+relevant source evidence, and deployed bundle revision. Preserve unknown fields.
+
+The maintainer owns diagnosis, regression coverage, master script/skill fixes,
+and verified redistribution. Omega-prime should not ask Rand to debug wake
+frequency or silently patch deployed copies. Duplicate defect reports share
+one incident with new evidence appended; do not create another wake/report
+loop while the original defect is open. Do not stop required monitoring merely
+to hide excessive wakes. User-facing decisions about the monitored project,
+such as unresolved unmerged integration closure, still escalate to Rand.
+
+Automated wake-rate and duplicate-reason diagnostics require the durable wake
+ledger. Until implemented, Omega-prime must report observed excessive triggering
+through this same maintainer route; do not claim automatic detection exists.

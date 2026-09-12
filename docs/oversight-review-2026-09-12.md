@@ -149,3 +149,12 @@ DEV/QA/CI and B/C/I, blockers, phase milestones, evidence and as-of/coverage.
 The current renderer is not a full phase projection. Acceptance must cover
 requesting a report during collection/outage, unstarted sprints, overlapping
 phases, and historical reports after closure and snapshot pruning.
+
+## Follow-up requirement: maintainer owns operational defects
+
+Omega-prime follows skills without requiring Rand to direct routine work.
+Excessive or unjustified triggering escalates to amon@atm-monitor with durable
+wake/event evidence. The maintainer fixes masters and verifies redistribution.
+Add wake audit/defect deduplication to the runtime acceptance cases; a monitoring
+defect must not create another repeated escalation loop or disable required
+monitoring. Project decisions still follow their separate escalation routes.
