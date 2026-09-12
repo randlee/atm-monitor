@@ -130,8 +130,8 @@ and on sequential direct retries (exit 4, bounded mailbox reader error):
 - `ba-plan-critical-review`
 
 The original `BA1-FIX-R2-1789162822` reproducer now succeeds with seven events.
-The query migration works on the live host; complete event coverage remains
-unaccepted. No root cause is inferred from the generic reader error. Fenix
+At this pre-repair checkpoint, the query migration worked but complete event
+coverage remained unaccepted. The generic reader error did not establish a cause. Fenix
 received the reproduction/evidence report in `01M29N5D29QBE99KENXAKFDCAK`;
 Omega-prime received the remaining-failure guidance in
 `01M29N5D2VJWSD60G9CPSCNM2E`. Raw doctor output, snapshots, summary, and direct
@@ -141,7 +141,35 @@ Omega-prime's receipt `01M29N5E1FSXE2JSXSKMRMJQCG` independently reproduced
 177 sources, the same two failures, zero partial sources and zero deferrals.
 Inspection of deployed snapshots 11 and 12 confirms **158 tasks, 156 readable
 histories, and 158 persisted known IDs**; these supersede the receipt's stale
-155/157 counts. The receipt's suggestion of corrupted data is unconfirmed;
-root cause remains pending Fenix analysis. The deployed snapshot records no
+155/157 counts. The receipt's suggestion of corrupted data was unconfirmed
+at this checkpoint; Fenix's subsequent diagnosis is recorded below. The deployed snapshot records no
 intervention deliveries. Query migration is verified with explicit remaining
 event coverage failures; BA.4 host-switch verification remains the next step.
+
+## Mixed-version event repair and verification
+
+Fenix's receipt `01M29N93FYFJBY2G3X9Z2BYADC` identifies two event rows written
+by the pre-BA 1.5.14 daemon after the ledger had migrated to BA.2. Both had
+complete state with a NULL `close_outcome`: sequence 5 (`completed`) for
+`BA2-TASK-IDENTITY-QUEUE-SOLAR-1789162312`, and sequence 11 (`rejected` to
+complete) for `ba-plan-critical-review`. BA.2's `TaskState::from_parts`
+requires an outcome for complete state and rejected these rows. The generic
+reader error is the classification problem tracked by atm-core #1410.
+
+Fenix reports backing up the ledger and setting `close_outcome=completed`
+on exactly those two rows, matching their task-row outcomes; his scan found
+no remaining close events without outcomes. This was a mixed-version write
+artifact, not a Phase BA code defect. atm-monitor performed no database edits.
+
+Independent direct queries now read five and eleven events respectively.
+Two complete installed-monitor ticks at September 12, 2026, 01:56:52 and
+01:57:09 UTC confirmed release 1.5.15 / API 1.5.0 and the `list` query surface:
+177 sources, **158/158 readable task histories and 1,661 events**, 158 persisted
+known IDs, and zero failed, partial, or deferred sources. Event data matched
+across both passes. This supersedes the pre-repair event-coverage failure.
+
+Raw evidence is retained in `.local/validation/host-1.5.15-repaired/`, with
+snapshots in the same validation state used before repair. Omega-prime was
+asked to repeat its deployment-state checks in `01M29N9YR9KPDEE1PRA1NPYMEZ`.
+BA.4 host-switch verification and follow-on #1411 remain separate checkpoints;
+this result does not enable scheduling or incident delivery.
