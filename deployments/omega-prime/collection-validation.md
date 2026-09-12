@@ -1,5 +1,32 @@
 # Scoped collection and onboarding validation
 
+## Current assessment — Phase BA schema mismatch
+
+Fenix's assessment in ATM message `01M29J86APT2V7KMNX4K70D4KA` reclassifies
+the event failures described below. The live ledger was migrated to the Phase
+BA / BA.2 schema while the installed CLI/daemon binaries report pre-BA version
+1.5.14. Read-only follow-up confirmed BA's `position`, `close_outcome`, task
+primary key and CHECK constraints, the timestamped pre-BA2 backup, 17 migrated
+events, and one started event. BA.2 already defines the matching event variants.
+Fenix also reports task assignment writes failing the BA schema constraints.
+
+The local atm-core `codex/task-event-reader-fix` commit `12f9eb3a0` restores
+reads only; it is **superseded and must not be merged as the remediation**.
+Its passing tests do not establish compatibility with the live BA schema.
+The initial diagnosis below did not account for schema provenance or task
+write compatibility and is retained as historical investigation evidence.
+
+Track deployment and full retest in
+[atm-core #1409](https://github.com/randlee/atm-core/issues/1409). Keep it open
+until a matching Phase BA deployment passes both repro commands and two complete
+collection ticks. Binary switching or backup restoration remains an operator
+decision. The separate decode-versus-outage classification gap is
+[atm-core #1410](https://github.com/randlee/atm-core/issues/1410), targeting develop.
+BA.4 also changes the collector command surface to `atm task list` and
+`atm task events`; adapt and validate the collectors when that CLI is deployed.
+
+## Historical validation
+
 The September 11 update supersedes the initial bundle's 100-PR and per-tick
 task-event budgets. It also adds the separate `oversight-onboarding` skill and
 independent settings for overlapping phases. Scheduling and incident delivery
