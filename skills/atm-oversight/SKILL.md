@@ -9,6 +9,8 @@ Deliver exactly four outcomes: a useful phase/sprint table, assigned-but-idle
 alerts, CI/merge-readiness alerts, and self-healing. The
 [requirements](references/requirements.md) define the contract. Existing scripts
 are not proof it is implemented; report their actual limitations.
+Use the [design](references/design.md) for state/query contracts and field-level
+source authority, fallback and conflict rules.
 
 ## Continuous operation
 
@@ -21,6 +23,20 @@ Cron runs independent questions, combines successful state, saves it and decides
 from changes plus current state. Do not turn an investigation into one collector.
 Do not scan all historical tasks every tick. A failure in one question does not
 stop healthy questions or other repos.
+
+## Missing or conflicting information
+
+Keep usable parts of an answer. If ATM QA is unavailable but a matching
+revision-addressed PR QA report exists, use it as a marked fallback. If neither
+is available, show QA unknown/stale while still reporting known assignments
+and PR state. Do not require both sources when one proves the fact.
+
+Sources must establish the same fact to substitute for each other. A task
+assignment does not replace an agent-idle observation; local tests do not replace
+GitHub CI. Two copies of one report count once. Resolve source conflicts using
+the field's authority/revision rule, never by arrival order; otherwise preserve
+the disagreement and investigate. Failed primary queries retain repair ownership
+even when fallback keeps the report useful.
 
 ## Phase/sprint table
 

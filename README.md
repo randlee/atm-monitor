@@ -9,11 +9,13 @@ This repository has four outputs:
 | O3 | CI and merge-readiness alerts | Detect conflicts, failed checks, required checks that never start and stuck checks; alert with a concrete cause/action |
 | O4 | Self-healing | Return typed actionable errors; diagnose, repair/retry or escalate while unaffected monitoring continues |
 
-The [requirements](skills/atm-oversight/references/requirements.md) and
-[operating skill](skills/atm-oversight/SKILL.md) are the only behavior/design
-specifications. [Distribution](docs/distribution.md) explains verified upgrades
-and recovery. No template administration, naming campaign or phase-lifecycle
-platform is part of this repository.
+The [requirements](skills/atm-oversight/references/requirements.md) define the
+four outcomes. The [design](skills/atm-oversight/references/design.md) specifies
+immutable state, independent queries, source reconciliation and cron decisions.
+The [operating skill](skills/atm-oversight/SKILL.md) tells Omega how to use them
+and recover failures. [Distribution](docs/distribution.md) explains verified
+upgrades and recovery. No template administration, naming campaign or
+phase-lifecycle platform is part of this repository.
 
 ## Retained files and their purpose
 

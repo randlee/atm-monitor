@@ -2,6 +2,8 @@
 
 This is the proposed contract, not a claim that the deployed collectors meet it.
 Only the following four outcomes are in scope, continuously across dozens of repos.
+The [design](design.md) specifies data structures, query contracts, evidence
+reconciliation and decisions. It refines these requirements without adding outputs.
 
 | ID | Requirement | Acceptance evidence |
 |---|---|---|
@@ -40,6 +42,12 @@ Every result is a discriminated union:
 A normal portion of full state is `ok`; `partial` means retrieval was incomplete.
 Errors distinguish timeout, unavailable service, access/authentication, missing
 command, unsupported capability and invalid input/response. Exclude secrets.
+
+Resolve evidence per field. Use one fresh authoritative source or a declared
+fallback; two available sources are not a quorum requirement. Preserve source
+conflicts and mark missing fields unknown/stale without hiding healthy fields.
+Complementary evidence is not interchangeable: an assignment alone cannot prove
+an agent is idle. Duplicated reports count once even across different sources.
 
 | Question | Outcome | Scope |
 |---|---|---|

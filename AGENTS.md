@@ -4,6 +4,9 @@ Every change must directly support one of four outcomes: O1 phase/sprint table,
 O2 assigned-but-idle alerts, O3 CI/merge-readiness alerts, O4 self-healing.
 Read `skills/atm-oversight/references/requirements.md` and the operating
 `skills/atm-oversight/SKILL.md`. README.md maps retained files to these outcomes.
+The data/query/composition contracts are in
+`skills/atm-oversight/references/design.md`. Missing sources degrade individual
+facts; use declared fallbacks and preserve conflicts rather than inventing values.
 
 State is immutable data only. Independent Python queries are named
 `<target>_<query>.py`, under 100 source lines excluding blanks/comments, and
