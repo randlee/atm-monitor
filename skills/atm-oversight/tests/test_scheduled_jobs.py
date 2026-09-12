@@ -85,6 +85,12 @@ class ScheduledJobTests(unittest.TestCase):
         result = detect(self.config, self.activity, self.collect)
         self.assertEqual(result['added_teams'], ['a', 'b'])
 
+    def test_documented_roster_status_enrolls_activity(self):
+        self.rows['a'][0].pop('state')
+        self.rows['a'][0]['status'] = 'active'
+        result = detect(self.config, self.activity, self.collect)
+        self.assertEqual(result['added_teams'], ['a'])
+
     def test_idle_and_source_failure_preserve_watch_list_and_first_seen(self):
         self.rows['a'][0]['state'] = 'active'
         detect(self.config, self.activity, self.collect)

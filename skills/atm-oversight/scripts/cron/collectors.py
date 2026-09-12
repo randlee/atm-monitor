@@ -113,6 +113,16 @@ def decode(kind, raw, team):
         rows = require(list_of_objects(data['members'], 'members'), ('name', 'agent_id'))
         if any(row['agent_id'] != row['name'] + '@' + team for row in rows):
             raise ValueError('roster member identity does not match requested team')
+        # ATM's documented roster field is ``status``; older deployments used
+        # ``state``.  If both are present, contradictory values are unsafe to
+        # resolve implicitly because activity detection drives wakeups.
+        for row in rows:
+            if row.get('status') is not None and row.get('state') is not None:
+                if row['status'] != row['state']:
+                    raise ValueError('roster member has conflicting status and state')
+            for field in ('status', 'state'):
+                if row.get(field) is not None and not isinstance(row[field], str):
+                    raise ValueError('roster member ' + field + ' must be a string')
         return rows
     if kind in {'tasks', 'task-events'}:
         rows = require(list_of_objects(data, kind), ('team', 'task_id', 'assignee'))

@@ -76,3 +76,14 @@ gap without claiming monitoring works.
 Master instructions, scripts, and tests live in `atm-monitor/skills/oversight-onboarding`.
 Make policy/code changes there before distributing a whole verified bundle.
 Per-project settings and evidence belong in deployment state, not in the skill.
+
+## Additional and reopened phases
+
+A repository has one shared monitoring job while any phase is open. A new
+phase joins that job; it does not replace an existing phase or create another
+repo cron. `new-phase-planned` begins monitoring during planning/hardening,
+before plan readiness or development. For closure, manual abandonment, and
+reopening, use `atm-oversight/references/phase-closure.md` in the deployed skill.
+Adding settings with this writer is not a reopening transition. Inspect prior
+closure events first and record an explicit reopening before reactivating work.
+The settings writer does not implement lifecycle state or cron start/stop.

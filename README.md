@@ -1,7 +1,8 @@
 # atm-monitor
 
 Small, tested tools for ATM team oversight. The first stage runs on one
-computer with JSON state; SQLite and multiple computers are later stages.
+computer with JSON state and an oversight event journal; ATM and Git retain
+the canonical source facts. A second database is not required for this stage.
 
 `skills/atm-oversight/` contains the monitoring runtime. The separate
 `skills/oversight-onboarding/` skill establishes phase settings when new work
@@ -48,3 +49,21 @@ branches; confirmed stack-rule/order violations go to the team and operator;
 serious problems escalate to the operator. The kit emits routed findings and
 records confirmed interventions. Notification transport and an unattended
 delivery worker must be integrated with the selected gateway before rollout.
+
+## Agent skill discovery
+
+Codex and Claude project entrypoints are committed under `.agents/skills/` and
+`.claude/skills/`. Both load the authoritative
+[template maintenance skill](skills/atm-template-maintainence/SKILL.md), keeping
+one type/metadata standard and one set of scripts. `AGENTS.md` and `CLAUDE.md`
+also route template work there. This provides discovery for agents working in
+this repository; it does not install a global skill in every other repository.
+Restart an existing agent session if it has not discovered the new directory.
+
+The locations follow [Codex skill discovery](https://developers.openai.com/codex/skills/)
+and [Claude project skills](https://code.claude.com/docs/en/skills). The portable
+entrypoints are regular files so checkout behavior does not depend on symlinks.
+
+See the [comprehensive skills/scripts review](docs/oversight-review-2026-09-12.md)
+for fixed defects, the multi-phase lifecycle, manual closure, and remaining
+runtime/scheduler integration gates.

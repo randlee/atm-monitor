@@ -1,5 +1,7 @@
 import copy
+import json
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -23,6 +25,18 @@ class HealthTests(unittest.TestCase):
 
     def test_healthy_and_unknown_mergeability_are_silent(self):
         self.assertEqual(evaluate(self.snapshot), [])
+
+    def test_cli_rejects_future_snapshot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            future = copy.deepcopy(self.snapshot)
+            future['observed_at'] = '2999-01-01T00:00:00Z'
+            with locked(directory):
+                save(directory, future)
+            script = ROOT / 'scripts' / 'cron' / 'check_health.py'
+            result = subprocess.run([sys.executable, str(script), '--state-dir', directory],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertEqual(json.loads(result.stdout)['status'], 'unavailable')
 
     def test_ci_failure_routes_only_to_lead(self):
         self.pr['statusCheckRollup'][0]['conclusion'] = 'FAILURE'

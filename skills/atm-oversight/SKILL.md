@@ -37,6 +37,25 @@ and the general-cron → repo-specific-cron handoff. Record evidence before
 reporting state or metrics. Never substitute a watch-list entry, an idle agent,
 or queue disappearance for a phase state transition.
 
+## Closing a phase
+
+Follow [phase closure and repository ownership](references/phase-closure.md)
+when the phase's exact `integrate/*` PR closes or you manually close a phase.
+Use the major lifecycle `activity-detected` → `new-phase-planned` →
+`active-development` → `integration-closed`; manual closure is a separate
+terminal outcome when no integration PR exists. Planning/hardening is inside
+`new-phase-planned`; plan readiness is a milestone, not a prerequisite to
+starting monitoring. Record manual actor, reason, time, and evidence; you may
+record abandonment without inventing a PR or successful integration.
+
+One repo cron serves all its open phases. Closing one phase stops that shared
+cron only when no other phase remains open. Preserve a final report, coverage
+gaps, and unresolved incident dispositions. Record scheduler stop before
+releasing ownership and rearming discovery. A journal entry alone does not
+stop a cron: lifecycle projection, scope retirement, and scheduler integration
+remain unimplemented runtime work. Never mark the handoff finished without
+the actual scheduler receipt.
+
 ## New phase onboarding
 
 When phase monitoring returns `onboarding_requests`, invoke the separate

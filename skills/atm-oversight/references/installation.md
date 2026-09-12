@@ -199,3 +199,13 @@ claiming continuous oversight.
 
 See [operations](operations.md) for storage/recovery details and the
 [improvement plan](improvement-plan.md) for the remaining rollout work.
+
+## Phase closure and shared cron lifetime
+
+Use [phase closure](phase-closure.md) for integration PR closure or manual
+closure by Omega-prime. One repo cron serves all open phases and stops only
+after the last closes, with a recorded scheduler stop before ownership release.
+The current scripts do not implement this lifecycle/ownership integration;
+the cron examples above are collection prototypes, not automatic phase handoffs.
+Do not connect watch-list additions directly to agent wakeups: structured
+significance qualification and active-repo suppression remain required work.

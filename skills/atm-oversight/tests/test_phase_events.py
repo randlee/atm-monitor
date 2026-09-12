@@ -53,5 +53,26 @@ class PhaseEventTests(unittest.TestCase):
             list_events(self.directory)
 
 
+    def test_invalid_writer_timestamp_prevents_read_and_append(self):
+        append(self.directory, self.event())
+        path = self.directory / 'events/000000000001.json'
+        stored = json.loads(path.read_text())
+        for value in ('', 'not-a-date', '2026-09-12T12:00:00'):
+            stored['observed_at'] = value
+            path.write_text(json.dumps(stored))
+            with self.assertRaisesRegex(ValueError, 'writer timestamp'):
+                list_events(self.directory)
+            with self.assertRaisesRegex(ValueError, 'writer timestamp'):
+                append(self.directory, self.event(event_id='evt-2'))
+
+    def test_duplicate_event_ids_in_existing_log_are_corruption(self):
+        append(self.directory, self.event())
+        second = append(self.directory, self.event(event_id='evt-2'))
+        second['event_id'] = 'evt-1'
+        (self.directory / 'events/000000000002.json').write_text(json.dumps(second))
+        with self.assertRaisesRegex(ValueError, 'duplicate event_id'):
+            list_events(self.directory)
+
+
 if __name__ == '__main__':
     unittest.main()

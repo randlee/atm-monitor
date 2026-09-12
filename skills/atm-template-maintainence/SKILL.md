@@ -205,3 +205,24 @@ when comparing file bytes with catalog IDs: strict UTF-8, CRLF/lone CR
 normalized to LF, BOM and final newline preserved (see adoption evidence).
 A source path in future catalog
 provenance will remain a locator hint, with content identity checked by SHA.
+
+## Discovery and receipt recovery
+
+In atm-monitor, `.agents/skills/atm-template-maintainence/SKILL.md` and
+`.claude/skills/atm-template-maintainence/SKILL.md` route Codex and Claude to
+this master. The repository `AGENTS.md`/`CLAUDE.md` provide the same routing.
+The entrypoints are not standalone deployable bundles; keep their targets in
+the same checkout. Other repositories need their own deliberate installation.
+
+The maintenance helper writes a durable `prepared` receipt before its database
+transaction and replaces it with `committed` afterward. If only `prepared`
+remains, outcome is uncertain: compare recorded before/after type values and
+schema hashes with a fresh read, retaining the backup. Do not assume rollback
+or blindly restore the whole database, which could erase unrelated new work.
+A completion-receipt error explicitly reports that the database committed.
+A no-op apply creates no extra backup or receipt.
+
+Producer templates are authoritative repository files. Home-directory copies
+mentioned in historical adoption evidence were incidental workarounds, not the
+supported source or installation architecture. Daemon repository access is a
+separate upstream concern and outside this skill's maintenance scope.

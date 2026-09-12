@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -26,13 +27,25 @@ def _json_object(value, source):
 
 
 def _catalog_rows(value):
-    if isinstance(value, list):
-        return value
+    rows = value if isinstance(value, list) else None
     if isinstance(value, dict):
-        for key in ("templates", "revisions", "items", "data"):
-            if isinstance(value.get(key), list):
-                return value[key]
-    raise ValueError("catalog JSON has no template list")
+        rows = next((value[key] for key in ("templates", "revisions", "items", "data")
+                     if isinstance(value.get(key), list)), None)
+    if rows is None:
+        raise ValueError("catalog JSON has no template list")
+    seen = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("catalog entry is not an object")
+        sha = row.get("template_sha")
+        if not isinstance(sha, str) or re.fullmatch(r"[0-9a-f]{64}", sha) is None:
+            raise ValueError("catalog entry requires a full lowercase template SHA")
+        if sha in seen:
+            raise ValueError("duplicate template SHA in catalog: " + sha)
+        seen.add(sha)
+        if row.get("template_type") is not None and not isinstance(row["template_type"], str):
+            raise ValueError("catalog template_type must be a string or null")
+    return rows
 
 
 def _schema_body(value):
@@ -170,7 +183,7 @@ def _standard_findings(metadata, expected):
         if not isinstance(actual_workflow, dict):
             findings.append(_finding("expected_workflow_missing", "standard workflow declaration is missing", "error"))
         else:
-            for field in ("scope", "state", "stage", "transition"):
+            for field in ("scope", "state", "stage", "transition", "iteration_variable"):
                 if field not in expected_workflow:
                     continue
                 if field == "scope":
@@ -204,7 +217,7 @@ def audit(catalog_value, schemas, source_failures=None, standards=None):
             failures.append({"source": "catalog", "error": "catalog entry has no template_sha"})
             continue
         catalog_type = row.get("template_type")
-        if isinstance(catalog_type, str) and catalog_type:
+        if isinstance(catalog_type, str) and catalog_type.strip():
             type_counts[catalog_type] = type_counts.get(catalog_type, 0) + 1
         else:
             untyped.append(sha)
@@ -213,7 +226,9 @@ def audit(catalog_value, schemas, source_failures=None, standards=None):
         schema_for_type = schemas.get(sha)
         if expected_type is None and sha not in bindings and schema_for_type is not None:
             try:
-                expected_type = _schema_body(schema_for_type).get("metadata", {}).get("type")
+                metadata = _schema_body(schema_for_type).get("metadata")
+                candidate = metadata.get("type") if isinstance(metadata, dict) else None
+                expected_type = candidate if isinstance(candidate, str) else None
             except (ValueError, TypeError, json.JSONDecodeError):
                 pass
         if expected_type is None and catalog_type in known_types:
@@ -235,7 +250,7 @@ def audit(catalog_value, schemas, source_failures=None, standards=None):
             except (ValueError, TypeError, json.JSONDecodeError) as exc:
                 result.append(_finding("schema_invalid", exc, "error"))
         if result:
-            findings[sha] = result
+            findings.setdefault(sha, []).extend(result)
         if standards is not None and expected_type in known_types:
             if result:
                 counts["noncompliant"] += 1

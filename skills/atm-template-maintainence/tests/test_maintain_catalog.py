@@ -3,6 +3,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -111,6 +112,36 @@ class MaintainCatalogTests(unittest.TestCase):
         self.assertEqual(after_two[1], "dev-task")
         self.assertEqual(after_two[2], before_two[2])
         self.assertEqual(after_two[3:], before_two[3:])
+
+
+    def test_receipt_failure_before_commit_leaves_database_unchanged(self):
+        before = self._row()
+        with patch.object(maintain_catalog, "_write_receipt", side_effect=OSError("disk full")):
+            with self.assertRaises(OSError):
+                maintain_catalog.maintain(self.database, self.standards, apply=True, receipt_dir=self.receipts)
+        self.assertEqual(self._row(), before)
+
+    def test_completion_receipt_failure_retains_prepared_recovery_evidence(self):
+        writer = maintain_catalog._write_receipt
+        def fail_completion(path, receipt):
+            if receipt["status"] == "committed":
+                raise OSError("disk full")
+            writer(path, receipt)
+        with patch.object(maintain_catalog, "_write_receipt", side_effect=fail_completion):
+            with self.assertRaisesRegex(OSError, "database committed"):
+                maintain_catalog.maintain(self.database, self.standards, apply=True, receipt_dir=self.receipts)
+        self.assertEqual(self._row()[1], "dev-task")
+        receipt = json.loads(next(self.receipts.glob("*.json")).read_text())
+        self.assertEqual(receipt["status"], "prepared")
+        self.assertTrue(Path(receipt["backup_path"]).is_file())
+        self.assertEqual(receipt["rows"][0]["schema_after_sha256"], maintain_catalog._sha(self._row()[2]))
+
+    def test_noop_apply_creates_no_second_backup_or_receipt(self):
+        maintain_catalog.maintain(self.database, self.standards, apply=True, receipt_dir=self.receipts)
+        files_before = sorted(p.name for p in self.database.parent.rglob("*"))
+        result = maintain_catalog.maintain(self.database, self.standards, apply=True, receipt_dir=self.receipts)
+        self.assertEqual(result["rowcount"], 0)
+        self.assertEqual(files_before, sorted(p.name for p in self.database.parent.rglob("*")))
 
 
 if __name__ == "__main__":

@@ -111,7 +111,7 @@ def main():
         if snapshot is None:
             raise ValueError('no valid monitoring snapshot')
         age = (datetime.now(timezone.utc) - datetime.fromisoformat(snapshot['observed_at'].replace('Z', '+00:00'))).total_seconds()
-        if errors or age > args.max_age_seconds:
+        if errors or age < 0 or age > args.max_age_seconds:
             raise ValueError('snapshot is stale or recovered; refresh before notifying')
         findings = evaluate(snapshot)
         print(json.dumps({'schema_version': 1, 'observed_at': snapshot['observed_at'],

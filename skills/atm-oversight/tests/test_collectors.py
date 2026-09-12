@@ -93,6 +93,16 @@ class CollectorTests(unittest.TestCase):
             with self.subTest(kind=kind):
                 self.assertEqual(collect(kind, team='a', run=self.response(data))['status'], 'unavailable')
 
+    def test_roster_accepts_documented_status_and_rejects_conflicting_aliases(self):
+        status_row = {'name': 'worker', 'agent_id': 'worker@a', 'status': 'active'}
+        result = collect('roster', team='a', run=self.response({'team': 'a', 'members': [status_row]}))
+        self.assertEqual(result['status'], 'ok')
+        self.assertEqual(result['data'], [status_row])
+        conflicting = dict(status_row, state='idle')
+        result = collect('roster', team='a', run=self.response({'team': 'a', 'members': [conflicting]}))
+        self.assertEqual(result['status'], 'unavailable')
+        self.assertIsNone(result['data'])
+
     def test_team_and_task_isolation(self):
         cases = [('tasks', [{'team': 'wrong', 'task_id': 't', 'assignee': 'w', 'state': 'active'}]),
                  ('roster', {'team': 'a', 'members': [{'name': 'w', 'agent_id': 'w@b'}]}),

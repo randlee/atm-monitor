@@ -1,7 +1,8 @@
 # Phase discovery, planning, and event recording
 
 Use this procedure when activity changes, a planning assignment appears, or a
-phase milestone needs interpretation. Omega-prime owns discovering the work,
+phase milestone needs interpretation. For integration PR closure or manual
+closure, follow [phase closure](phase-closure.md). Omega-prime owns discovering the work,
 starting its phase-monitoring handoff, recording what happened, and following
 it through planning and development. Do not just return agent process states.
 
@@ -292,8 +293,9 @@ untagged records are not retroactively covered by the new structured query.
 Fenix supplied `01M2BD1NRG4J6DAZ3ZX6V0BKT3`. For message-based detection,
 use declared template metadata only, never message text/task descriptions.
 The separate `plan/*` PR signals still apply. PR #1434 adds metadata to the
-orchestration/hardening templates; Fenix reports his installed copies live,
-with other senders adopting it on reinstall. Do not assume old admissions are
+orchestration/hardening templates; Fenix reported temporary home copies live during that historical check.
+Repository templates remain authoritative; verify adoption from repository
+source revisions and actual admissions, not a home-copy convention. Do not assume old admissions are
 retroactively typed or that all producers already emit the new metadata.
 
 Query two clauses and **union by message ID within team**, preserving source

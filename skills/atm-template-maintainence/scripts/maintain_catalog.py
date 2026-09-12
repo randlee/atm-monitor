@@ -114,6 +114,27 @@ def _backup(connection, database):
     return target
 
 
+def _write_receipt(path, document):
+    """Persist intent before DB mutation; completion replaces it atomically."""
+    temporary = path.with_name(path.name + ".writing-" + secrets.token_hex(8))
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            json.dump(document, handle, indent=2, ensure_ascii=False)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        if os.name != "nt" and hasattr(os, "O_DIRECTORY"):
+            directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def maintain(database, standards, *, apply=False, receipt_dir=None):
     expectations = _load_expectations(Path(standards))
     connection = _connect(database, apply)
@@ -121,17 +142,29 @@ def maintain(database, standards, *, apply=False, receipt_dir=None):
         selected = _inspect(connection, expectations)
         preview = [{"template_sha": item["template_sha"], "expected_type": item["expected_type"]} for item in selected]
         result = {"mode": "apply" if apply else "dry-run", "rowcount": len(selected), "rows": preview}
-        if not apply:
+        if not apply or not selected:
             return result
+        if receipt_dir is None:
+            raise ValueError("receipt_dir is required with apply")
         directory = Path(receipt_dir)
         directory.mkdir(parents=True, exist_ok=True)
-        if not directory.is_dir() or not os.access(directory, os.W_OK):
-            raise ValueError(f"receipt directory is not writable: {directory}")
         backup = _backup(connection, database)
+        timestamp = datetime.now(timezone.utc).isoformat()
+        receipt = {"status": "prepared", "timestamp": timestamp,
+                   "database": str(Path(database).resolve()), "backup_path": str(backup),
+                   "source_mapping": expectations, "rowcount": len(selected), "rows": []}
+        for item in selected:
+            receipt["rows"].append({"template_sha": item["template_sha"], "expected_type": item["expected_type"],
+                                    "template_type_before": item["old_template_type"], "template_type_after": item["new_template_type"],
+                                    "metadata_type_before": item["metadata_before"], "metadata_type_after": item["metadata_after"],
+                                    "schema_before_sha256": _sha(item["old_schema_json"]),
+                                    "schema_after_sha256": _sha(item["new_schema_json"])})
+        receipt_path = directory / f"catalog-maintenance-{secrets.token_hex(16)}.json"
+        # Failure here leaves the database untouched. A crash after commit but
+        # before final receipt replacement leaves durable 'prepared' evidence.
+        _write_receipt(receipt_path, receipt)
         connection.execute("BEGIN IMMEDIATE")
         try:
-            # Re-read and compare before the first UPDATE, so a concurrent change
-            # causes a complete rollback rather than a partial repair.
             current = {row["template_sha"]: row for row in connection.execute(
                 "SELECT template_sha, template_type, schema_json FROM message_templates")}
             for item in selected:
@@ -150,27 +183,12 @@ def maintain(database, standards, *, apply=False, receipt_dir=None):
         except Exception:
             connection.rollback()
             raise
-        timestamp = datetime.now(timezone.utc).isoformat()
-        receipt = {"timestamp": timestamp, "database": str(Path(database).resolve()),
-                   "backup_path": str(backup), "source_mapping": expectations,
-                   "rowcount": len(selected), "rows": []}
-        for item in selected:
-            receipt["rows"].append({"template_sha": item["template_sha"], "expected_type": item["expected_type"],
-                                    "template_type_before": item["old_template_type"], "template_type_after": item["new_template_type"],
-                                    "metadata_type_before": item["metadata_before"], "metadata_type_after": item["metadata_after"],
-                                    "schema_before_sha256": _sha(item["old_schema_json"]),
-                                    "schema_after_sha256": _sha(item["new_schema_json"])})
-        receipt_path = directory / f"catalog-maintenance-{timestamp.replace(':', '').replace('+00:00', 'Z')}.json"
-        with receipt_path.open("x", encoding="utf-8") as handle:
-            json.dump(receipt, handle, indent=2, ensure_ascii=False)
-            handle.write("\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        directory_fd = os.open(directory, os.O_RDONLY)
+        receipt["status"] = "committed"
+        receipt["committed_at"] = datetime.now(timezone.utc).isoformat()
         try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+            _write_receipt(receipt_path, receipt)
+        except OSError as exc:
+            raise OSError(f"database committed; completion receipt failed; reconcile prepared receipt {receipt_path}: {exc}") from exc
         result.update({"backup_path": str(backup), "receipt_path": str(receipt_path)})
         return result
     finally:

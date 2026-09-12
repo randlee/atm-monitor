@@ -66,6 +66,7 @@ def _event_files(state_dir):
 
 def _read_events(state_dir):
     events = []
+    seen_ids = set()
     for expected, (sequence, path) in enumerate(_event_files(state_dir), 1):
         if sequence != expected:
             raise ValueError(f'event sequence gap before {path.name}')
@@ -76,6 +77,15 @@ def _read_events(state_dir):
         _validate(event)
         if event.get('seq') != sequence or not isinstance(event.get('observed_at'), str):
             raise ValueError(f'invalid writer metadata: {path.name}')
+        try:
+            observed = datetime.fromisoformat(event['observed_at'].replace('Z', '+00:00'))
+            if observed.tzinfo is None:
+                raise ValueError
+        except ValueError as exc:
+            raise ValueError(f'invalid writer timestamp: {path.name}') from exc
+        if event['event_id'] in seen_ids:
+            raise ValueError(f'duplicate event_id in log: {path.name}')
+        seen_ids.add(event['event_id'])
         events.append(event)
     return events
 

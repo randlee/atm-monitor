@@ -46,9 +46,12 @@ def detect(config, state_dir, collector=collect):
                 continue
             for member in source['data']:
                 members.append((team, member))
-                if member.get('state') in {'active', 'working', 'blocked'}:
+                activity_state = member.get('status')
+                if activity_state is None:
+                    activity_state = member.get('state')
+                if activity_state in {'active', 'working', 'blocked'}:
                     evidence[team['name']].append({'source': 'roster', 'agent_id': member['agent_id'],
-                                                    'state': member['state']})
+                                                    'state': activity_state})
         unresolved = []
         herdr = sources['herdr']
         if herdr['status'] == 'ok':

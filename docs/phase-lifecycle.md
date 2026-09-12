@@ -22,8 +22,10 @@ capabilities already implemented.
    Discovery must not depend on an existing phase configuration, development
    tasks, or an open PR. Agent activity prompts token-free qualification;
    substantive message/Git/PR evidence gates the agent handoff.
-3. That discovery signals Omega-prime to start active monitoring for the
-   identified phase. This starts an additional repository-specific cron.
+3. That discovery establishes the `new-phase-planned` state and signals
+   Omega-prime to start active monitoring for the identified repository. This
+   starts one additional repository-specific cron; planning and hardening are
+   already underway, but the phase is not ready for development yet.
    Pending/active repo ownership suppresses further general-activity wakes.
    The repo-specific cron owns discovery of additional phases for that repo;
    the general activity monitor continues checking other eligible repos.
@@ -51,17 +53,29 @@ records the requirement; no additional cron has been installed by this update.
 
 ## Separate lifecycle from team evidence
 
-A phase is a scope of project work, not the team's lifetime. Its completion
-must not stop team roster, planned-work queue, immutable event-log collection,
-or discovery of subsequent phases. Queue snapshots describe what is planned;
-events establish what happened across queue movement and reassignment.
+A phase is a scope of project work, not the team's lifetime. Its lifecycle
+states are `activity-detected`, `new-phase-planned`, `active-development`, and
+`integration-closed`. `activity-detected` is a candidate observation and does
+not establish a phase. A qualified handoff establishes `new-phase-planned` and
+starts the repository cron. Accepted development evidence transitions to
+`active-development`. An authoritative integration closure transitions to
+`integration-closed`; closing the integration PR stops the single repository
+cron only when no other phase in that repository remains open. Reopening,
+supersession, or abandonment is an explicit lifecycle transition and must
+retain the prior closure record.
 
-Retain completed phases in config, with their original start timestamp,
+Its completion must not stop team roster, planned-work queue, immutable
+event-log collection, or discovery of subsequent phases. Queue snapshots
+describe what is planned; events establish what happened across queue movement
+and reassignment.
+
+Retain integration-closed phases in config, with their original start timestamp,
 start evidence, and worktree settings. Add explicit `status` (`active` or
 `complete`), `completed_at`, and `completion_evidence`. Missing status means
 active for existing configs. Completion requires a timezone-aware timestamp
 no earlier than the start, and authoritative phase acceptance/completion
-evidence. It must not be inferred solely from all discovered PRs being merged:
+evidence or an explicitly recorded abandonment/supersession decision. It must
+not be inferred solely from all discovered PRs being merged:
 discovery can be incomplete and integration or acceptance may remain.
 
 Omega-prime reports AZ and BA complete, but their actual config transition
@@ -70,10 +84,20 @@ requires the corresponding receipts and timestamps. Those were requested in
 
 ## Completion transition
 
+For an integration closure, evidence is the exact `integrate/*` head branch for
+the phase and repository, joined to its unique PR identity and terminal closed
+outcome. Record the full head SHA, PR URL/number, source branch,
+phase/repository association, and source timestamps. A closed but unmerged PR
+is a terminal closure outcome but is not successful integration/merge evidence;
+retain that distinction in the lifecycle record. An abandoned or superseded
+phase may be closed without an integration PR: the operator records the actor,
+reason, timestamp, and supporting evidence.
+
 Before retiring routine phase-specific scans, collect and preserve a final
 phase observation with its timestamp, source provenance, PR heads/checks,
 sprint associations, historical event evidence, and any coverage failures.
-Store an immutable snapshot reference protected from routine retention pruning.
+Store an immutable final report/snapshot reference protected from routine
+retention pruning.
 A source failure must not be disguised as complete evidence, and pending
 findings must not be silently resolved by phase completion.
 
@@ -89,7 +113,7 @@ refresh a completed phase's old CI/Git/worktree scope. Active overlapping phases
 keep their own boundaries. Shared resources needed by an active phase or team
 oversight remain eligible. Activity identity matching may still need historical
 worktree paths; use separate helpers for identity evidence and scan selection.
-Reports show completed phases as historical with
+Reports show integration-closed phases as historical with
 completion evidence and observation time, not as fresh active work or missing
 PR evidence. Historical reports remain available after later ticks.
 
@@ -107,6 +131,10 @@ could suppress new-phase discovery. Implementation must separate discovery
 from active phase refresh: maintain a bounded, durable discovery checkpoint
 and advance it only after a successful observation, including when no phases
 are active. Do not reset it to the current time and lose work during outages.
+When the repository cron stops, persist its scheduler stopped receipt before
+releasing repository ownership. Advance the durable discovery checkpoint only
+after that successful stop/release observation, so a restart does not
+retrigger historical activity or recreate the old phase.
 
 Config changes currently invalidate tracked sprint and last-good caches.
 Lifecycle transitions must preserve the final historical record rather than
@@ -131,6 +159,8 @@ signal. Guidance was sent to Omega-prime in `01M2BATY4CTZDX5E9ZJNHATT6B`.
 
 The maintained deployment skill procedure is
 [phase discovery and event recording](../skills/atm-oversight/references/phase-discovery.md).
+The manual closure and ownership procedure is
+[phase closure](../skills/atm-oversight/references/phase-closure.md).
 It specifies significance gating, durable pending/active repo ownership,
 planning evidence and round identity, state/event recording, and capability gaps.
 The phase-event writer provides durable local recording; automatic emission
@@ -152,3 +182,13 @@ signals remain independent evidence. The skill's phase-discovery reference
 records verified commands, producer migration limits, cursor handling, and
 pending/active repo suppression. These query checks do not implement cron
 ownership or phase-state projections by themselves.
+
+## Manual terminal outcome
+
+Omega-prime can manually close a phase without an integration PR, recording
+actor, reason, occurrence time, evidence, and outcome (`abandoned`, `superseded`,
+or evidenced `complete`). Use `manually-closed` for that terminal state, keeping
+it distinct from `integration-closed`. Neither closure stops the repo job while
+another phase remains open. Preserve unresolved incidents with owners and next
+actions; acknowledgement is not resolution. See the deployed closure procedure
+for the actual journal command and the remaining manual scheduler steps.
