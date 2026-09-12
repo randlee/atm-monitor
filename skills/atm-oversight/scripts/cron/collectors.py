@@ -4,6 +4,7 @@ import argparse
 from datetime import datetime, timezone
 import json
 import os
+import re
 from pathlib import Path
 import socket
 import subprocess
@@ -13,22 +14,25 @@ import time
 from github_inventory import collect_prs, parse_start_time
 
 MAX_OUTPUT_BYTES = 16 * 1024 * 1024
-KINDS = ('herdr', 'roster', 'tasks', 'task-events', 'git', 'ci', 'stack', 'worktrees')
+KINDS = ('herdr', 'doctor', 'roster', 'tasks', 'task-events', 'git', 'ci', 'stack', 'worktrees')
+ATM_KINDS = {'doctor', 'roster', 'tasks', 'task-events'}
 
 
-def command_for(kind, team=None, task_id=None, limit=None, branch='HEAD', since=None):
+def command_for(kind, team=None, task_id=None, limit=None, branch='HEAD', since=None, actor=None):
     if kind == 'herdr':
         return ['herdr', 'agent', 'list']
-    if kind in {'roster', 'tasks', 'task-events'} and not team:
-        raise ValueError('team is required')
+    if kind in ATM_KINDS and (not team or not actor):
+        raise ValueError('explicit team and actor are required for ATM queries')
+    if kind == 'doctor':
+        return ['atm', 'doctor', '--team', team, '--json']
     if kind == 'roster':
         return ['atm', 'members', '--team', team, '--json']
     if kind == 'tasks':
-        return ['atm', 'list', '--team', team, '--tasks', '--json']
+        return ['atm', 'task', 'list', '--team', team, '--as', actor, '--all', '--json']
     if kind == 'task-events':
         if not task_id:
             raise ValueError('task_id is required')
-        return ['atm', 'list', '--team', team, '--task-events', task_id, '--json']
+        return ['atm', 'task', 'events', task_id, '--team', team, '--as', actor, '--json']
     if kind == 'stack':
         return ['gh', 'stack', 'view', '--json']
     if kind == 'worktrees':
@@ -77,6 +81,10 @@ def decode(kind, raw, team):
             rows.append(dict(zip(('commit', 'committed_at', 'subject'), parts)))
         return rows
     data = json.loads(raw)
+    if kind == 'doctor':
+        if not isinstance(data, dict) or not isinstance(data.get('daemon_context'), dict):
+            raise ValueError('doctor response missing live daemon_context')
+        return data
     if kind == 'herdr':
         if not isinstance(data, dict) or 'error' in data:
             raise ValueError('Herdr returned an error or invalid envelope')
@@ -103,7 +111,14 @@ def decode(kind, raw, team):
         rows = require(list_of_objects(data, kind), ('team', 'task_id', 'assignee'))
         if any(row['team'] != team for row in rows):
             raise ValueError('task response includes a different team')
-        return require(rows, ('state',) if kind == 'tasks' else ('seq', 'at', 'event'))
+        require(rows, ('state',) if kind == 'tasks' else ('seq', 'at', 'event'))
+        field = 'state' if kind == 'tasks' else 'event'
+        if any(not isinstance(row[field], str) for row in rows):
+            raise ValueError(field + ' must be a string')
+        if kind == 'tasks' and any(row.get('close_outcome') is not None
+                                  and not isinstance(row['close_outcome'], str) for row in rows):
+            raise ValueError('close_outcome must be a string or null')
+        return rows
     if kind == 'ci':
         return require(list_of_objects(data, 'PRs'), ('number', 'headRefOid', 'headRefName'))
     if kind == 'stack':
@@ -128,14 +143,32 @@ class SourceError(Exception):
         self.error = error
 
 
+def require_task_api(context):
+    """Gate on the daemon's HTTP contract, never on the CLI release number."""
+    version = context.get('http_api_version') if isinstance(context, dict) else None
+    match = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)(?:[-+][0-9A-Za-z.+-]+)?', version) if isinstance(version, str) else None
+    if not match:
+        raise SourceError({'code': 'unknown-task-api', 'detail': 'doctor did not establish the daemon HTTP API version'})
+    major, minor, patch = map(int, match.groups())
+    if major == 1 and minor >= 6:
+        return
+    code = 'pre-ba-task-api' if (major, minor, patch) < (1, 5, 0) else 'unsupported-task-api'
+    raise SourceError({'code': code, 'http_api_version': version,
+                       'detail': 'task collection requires the Phase BA.4 HTTP API 1.6.x+ contract within major 1; '
+                                 'no legacy task flags or direct database fallback are used'})
+
+
 def collect(kind, *, repo=None, team=None, task_id=None, limit=None, branch='HEAD',
-            since=None, start_time=None, timeout=15, run=subprocess.run):
+            since=None, start_time=None, timeout=15, actor=None, daemon_context=None, run=subprocess.run):
     started = time.monotonic()
     result = {'schema_version': 1, 'source': kind, 'machine': socket.gethostname(),
-              'team': team, 'repo': str(Path(repo).resolve()) if repo else None,
+              'team': team, 'actor': actor, 'repo': str(Path(repo).resolve()) if repo else None,
               'observed_at': datetime.now(timezone.utc).isoformat(),
               'status': 'unavailable', 'data': None, 'error': None}
     try:
+        if kind in ATM_KINDS and (not isinstance(team, str) or not team.strip()
+                                 or not isinstance(actor, str) or not actor.strip()):
+            raise ValueError('explicit team and actor are required for ATM queries')
         if start_time is not None:
             parse_start_time(start_time)
             result['start_time'] = start_time
@@ -145,6 +178,10 @@ def collect(kind, *, repo=None, team=None, task_id=None, limit=None, branch='HEA
             raise ValueError('timeout must be positive; limit must be 1..100 for CI pages or 1..10000 for Git')
         env = os.environ.copy()
         env.update({'GIT_TERMINAL_PROMPT': '0', 'GH_PROMPT_DISABLED': '1', 'NO_COLOR': '1'})
+        if kind in ATM_KINDS:
+            # doctor/members do not expose --as. Pin their resolver inputs;
+            # task commands also carry explicit --as/--team flags.
+            env.update(ATM_IDENTITY=actor, ATM_TEAM=team)
         def execute(command):
             page = run(command, cwd=repo, capture_output=True, text=True, encoding='utf-8',
                        errors='replace', timeout=timeout, env=env)
@@ -157,7 +194,13 @@ def collect(kind, *, repo=None, team=None, task_id=None, limit=None, branch='HEA
         if kind == 'ci':
             result.update(data=collect_prs(execute, limit or 100, start_time), status='ok')
             return result
-        cmd = command_for(kind, team, task_id, limit, branch, since)
+        if kind in {'tasks', 'task-events'}:
+            if daemon_context is None:
+                doctor = decode('doctor', execute(command_for('doctor', team=team, actor=actor)), team)
+                daemon_context = doctor['daemon_context']
+            result['daemon_context'] = daemon_context
+            require_task_api(daemon_context)
+        cmd = command_for(kind, team, task_id, limit, branch, since, actor)
         p = run(cmd, cwd=repo, capture_output=True, text=True, encoding='utf-8',
                 errors='replace', timeout=timeout, env=env)
         if p.returncode:
@@ -194,7 +237,8 @@ def collect(kind, *, repo=None, team=None, task_id=None, limit=None, branch='HEA
 def cli(kind):
     p = argparse.ArgumentParser(description=f'Collect {kind} once, read-only, as JSON.')
     p.add_argument('--repo', type=Path)
-    p.add_argument('--team', required=kind in {'roster', 'tasks', 'task-events'})
+    p.add_argument('--team', required=kind in ATM_KINDS)
+    p.add_argument('--as', dest='actor', required=kind in ATM_KINDS, help='explicit querying ATM identity')
     p.add_argument('--task-id', required=kind == 'task-events')
     p.add_argument('--timeout', type=float, default=15)
     p.add_argument('--limit', type=int, help='CI page size (all pages fetched), or an explicit Git record limit')

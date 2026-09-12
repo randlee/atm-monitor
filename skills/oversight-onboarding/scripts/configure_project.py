@@ -35,7 +35,7 @@ def locked(path):
                 fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
 
 
-def configure(path, team, repo, phase, start_time, evidence, worktrees=None):
+def configure(path, team, repo, phase, start_time, evidence, worktrees=None, *, actor=None):
     path = Path(path).resolve()
     if datetime.fromisoformat(start_time.replace('Z', '+00:00')).tzinfo is None:
         raise ValueError('start_time must include a timezone')
@@ -44,6 +44,8 @@ def configure(path, team, repo, phase, start_time, evidence, worktrees=None):
     repo = Path(repo).resolve()
     if not repo.is_dir():
         raise ValueError('repo does not exist: ' + str(repo))
+    if actor is not None and (not isinstance(actor, str) or not actor.strip()):
+        raise ValueError('actor must be a nonempty ATM identity')
     path.parent.mkdir(parents=True, exist_ok=True)
     with locked(path.parent / ('.' + path.name + '.lock')):
         data = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {'schema_version': 1, 'teams': []}
@@ -53,6 +55,17 @@ def configure(path, team, repo, phase, start_time, evidence, worktrees=None):
         if len(matches) > 1:
             raise ValueError('duplicate team settings')
         entry = matches[0] if matches else {'name': team, 'worktrees': []}
+        if matches:
+            configured_actor = entry.get('actor')
+            if actor is None:
+                if not isinstance(configured_actor, str) or not configured_actor.strip():
+                    raise ValueError('existing team needs an explicit ATM actor')
+            else:
+                entry['actor'] = actor
+        elif actor is None:
+            raise ValueError('actor is required when configuring a new team')
+        else:
+            entry['actor'] = actor
         if matches and (path.parent / entry['repo']).resolve() != repo:
             raise ValueError('team already monitors another repository; reconcile catalog first')
         projects = entry.setdefault('projects', [])
@@ -92,6 +105,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', required=True, type=Path)
     parser.add_argument('--team', required=True)
+    parser.add_argument('--as', dest='actor')
     parser.add_argument('--repo', required=True, type=Path)
     parser.add_argument('--phase', required=True)
     parser.add_argument('--worktree', action='append', type=Path, help='repeat for locally accessible phase worktrees')
@@ -99,7 +113,8 @@ def main():
     parser.add_argument('--evidence', required=True, help='plan path, task/message ID, or user-provided start')
     args = parser.parse_args()
     try:
-        entry = configure(args.config, args.team, args.repo, args.phase, args.start_time, args.evidence, args.worktree)
+        entry = configure(args.config, args.team, args.repo, args.phase, args.start_time, args.evidence,
+                          args.worktree, actor=args.actor)
         print(json.dumps({'status': 'configured', 'project': entry}, indent=2))
         return 0
     except (OSError, ValueError, KeyError, TypeError, RuntimeError) as exc:

@@ -25,7 +25,7 @@ From the skill directory:
 ```sh
 python scripts/cron/tick.py --config assets/monitor.example.json --state-dir <temporary-state-directory>
 python scripts/oversight/report.py --state-dir <temporary-state-directory> --team atm-dev
-python scripts/oversight/mine_messages.py --team atm-dev --kind qa-report --with-bodies > <qa-evidence-file>
+python scripts/oversight/mine_messages.py --team atm-dev --as <actor> --kind qa-report --with-bodies > <qa-evidence-file>
 python scripts/oversight/report.py --state-dir <temporary-state-directory> --team atm-dev --qa-evidence <qa-evidence-file>
 ```
 

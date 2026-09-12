@@ -10,9 +10,9 @@ Run `python scripts/oversight/mine_messages.py --help` from the atm-monitor
 checkout for available selectors. Typical starting queries:
 
 ```sh
-python scripts/oversight/mine_messages.py --team <team> --kind qa-report --with-bodies
-python scripts/oversight/mine_messages.py --team <team> --kind fix-task --sprint <sprint> --with-bodies
-python scripts/oversight/mine_messages.py --team <team> --text <task-id> --since <timestamp> --with-bodies
+python scripts/oversight/mine_messages.py --team <team> --as <actor> --kind qa-report --with-bodies
+python scripts/oversight/mine_messages.py --team <team> --as <actor> --kind fix-task --sprint <sprint> --with-bodies
+python scripts/oversight/mine_messages.py --team <team> --as <actor> --text <task-id> --since <timestamp> --with-bodies
 ```
 
 `--task-id` and `--sprint` filter stored template variables. `--text` searches

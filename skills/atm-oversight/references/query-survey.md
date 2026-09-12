@@ -1,5 +1,22 @@
 # Monitoring query survey
 
+## Current adapter target
+
+The observations below are historical. Runtime queries now follow Phase BA
+guidance from Fenix (`01M29JDFFCSTB9RVVXXP4H5T4Z`): inspect
+`atm doctor --team TEAM --json` and its `daemon_context.http_api_version`.
+Use `atm task list --all --team TEAM --as ACTOR --json` and
+`atm task events ID --team TEAM --as ACTOR --json` for API major 1 at version
+1.6.0 or later. Pre-BA, unknown, future-major, and transitional 1.5.x task APIs
+are unavailable in this adapter; do not query the ledger through old flags or
+SQLite. Doctor/members use an explicitly configured `ATM_IDENTITY` environment
+because those commands lack `--as`; mail/task commands pass `--as` directly.
+The authority is Phase BA's `nudge-task-design.md` at `18db5acc3`, BA.2's typed
+rows, and BA.4's task CLI. Preserve unknown state/event/outcome strings and
+match escalation summaries by prefix without an enum of escalation kinds.
+
+## Historical observations
+
 Observed 2026-09-10 around 05:40 UTC (September 9 Pacific).
 This records discovery evidence, not agreed monitoring policy or a live status report.
 ATM queries were scoped to `atm-dev`. Source inspection used `../atm-core`

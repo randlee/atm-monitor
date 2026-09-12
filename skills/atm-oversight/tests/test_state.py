@@ -145,7 +145,7 @@ class TickTests(unittest.TestCase):
         folder = self.root / 'configuration'
         folder.mkdir()
         path = folder / 'monitor.json'
-        path.write_text(json.dumps({'schema_version': 1, 'teams': [{'name': 'a', 'repo': '..'}]}))
+        path.write_text(json.dumps({'schema_version': 1, 'teams': [{'name': 'a', 'actor': 'monitor', 'repo': '..'}]}))
         self.assertEqual(load_config(path)['teams'][0]['repo'], str(self.root.resolve()))
 
     def test_duplicate_team_and_missing_repository_are_rejected(self):

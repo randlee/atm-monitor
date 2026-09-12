@@ -33,7 +33,8 @@ def detect(config, state_dir, collector=collect):
             futures = {'herdr': pool.submit(collector, 'herdr', timeout=timeout)}
             for team in config['teams']:
                 futures[team['name'] + '/roster'] = pool.submit(
-                    collector, 'roster', team=team['name'], repo=team['repo'], timeout=timeout)
+                    collector, 'roster', team=team['name'], actor=team.get('actor'),
+                    repo=team['repo'], timeout=timeout)
             sources = {key: future.result() for key, future in futures.items()}
         now = datetime.now(timezone.utc).isoformat()
         watched = dict(previous.get('watched_teams', {})) if previous else {}

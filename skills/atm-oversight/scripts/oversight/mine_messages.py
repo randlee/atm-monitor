@@ -8,8 +8,19 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import re
 
 KINDS = ('dev-task', 'fix-task', 'qa-task', 'qa-report')
+_ESCALATION_SUMMARY = re.compile(
+    r'^escalation:(?P<kind>.+):(?P<agent>[^@\s]+)@(?P<team>[^\s]+)$')
+
+
+def parse_escalation_summary(text):
+    """Parse an escalation summary while preserving kinds unknown to this client."""
+    if not isinstance(text, str):
+        return None
+    match = _ESCALATION_SUMMARY.fullmatch(text.strip())
+    return match.groupdict() if match else None
 
 
 def invoke(command, repo=None, timeout=15):
@@ -24,17 +35,18 @@ def invoke(command, repo=None, timeout=15):
     return json.loads(p.stdout)
 
 
-def mine(team, *, kind=None, template_sha=None, cursor=None, text=None,
+def mine(team, *, actor, kind=None, template_sha=None, cursor=None, text=None,
          task_id=None, sprint=None, sender=None, agent=None, tag=None,
          effective_tag=None, since=None, until=None, limit=20,
          with_bodies=False, max_bodies=10, max_templates=8, query=invoke):
-    if not team or not 1 <= limit <= 1000 or not 1 <= max_templates <= 100 or not 0 <= max_bodies <= 100:
+    if (not isinstance(team, str) or not team.strip() or not isinstance(actor, str) or not actor.strip()
+            or not 1 <= limit <= 1000 or not 1 <= max_templates <= 100 or not 0 <= max_bodies <= 100):
         raise ValueError('invalid team or query budget')
     if kind and kind not in KINDS:
         raise ValueError('unsupported work-record kind')
     if cursor and kind and not template_sha:
         raise ValueError('use the page template_sha with its cursor to continue a kind query')
-    result = {'schema_version': 1, 'team': team, 'observed_at': datetime.now(timezone.utc).isoformat(),
+    result = {'schema_version': 1, 'team': team, 'actor': actor, 'observed_at': datetime.now(timezone.utc).isoformat(),
               'status': 'ok', 'messages': [], 'pages': [], 'errors': [],
               'selector': 'template-sha' if kind or template_sha else 'search'}
     shas = [template_sha]
@@ -55,7 +67,7 @@ def mine(team, *, kind=None, template_sha=None, cursor=None, text=None,
         command = ['atm', 'search']
         if text:
             command += [text]
-        command += ['--team', team, '--limit', str(limit), '--json']
+        command += ['--as', actor, '--team', team, '--limit', str(limit), '--json']
         filters = [('--template-sha', sha), ('--cursor', cursor), ('--from', sender),
                    ('--agent', agent), ('--tag', tag), ('--effective-tag', effective_tag),
                    ('--since', since), ('--until', until)]
@@ -75,6 +87,9 @@ def mine(team, *, kind=None, template_sha=None, cursor=None, text=None,
                     raise ValueError('invalid search hit')
                 if hit['key'].get('team') != team or not hit.get('message_id') or not hit.get('message_at'):
                     raise ValueError('search hit missing identity or belongs to another team')
+                escalation = parse_escalation_summary(hit.get('summary')) or parse_escalation_summary(hit.get('text'))
+                if escalation:
+                    hit['escalation'] = escalation
                 unique[hit['message_id']] = hit
             result['pages'].append({'template_sha': sha, 'next_cursor': data.get('next_cursor')})
             if data.get('next_cursor'):
@@ -90,7 +105,7 @@ def mine(team, *, kind=None, template_sha=None, cursor=None, text=None,
             result['status'] = 'partial'
         for hit in selected:
             try:
-                data = query(['atm', 'peek', '--team', team, hit['key']['agent'],
+                data = query(['atm', 'peek', '--as', actor, '--team', team, hit['key']['agent'],
                               '--message-id', hit['message_id'], '--json'])
                 if not isinstance(data, dict) or data.get('mutation_applied') is not False:
                     raise ValueError('peek did not confirm non-mutating read')
@@ -98,6 +113,9 @@ def mine(team, *, kind=None, template_sha=None, cursor=None, text=None,
                 if message.get('message_id') != hit['message_id'] or not isinstance(message.get('text'), str):
                     raise ValueError('peek returned wrong or missing message')
                 hit['body'] = message['text']
+                escalation = parse_escalation_summary(message.get('summary')) or parse_escalation_summary(message['text'])
+                if escalation:
+                    hit['escalation'] = escalation
             except (ValueError, OSError, KeyError, subprocess.TimeoutExpired) as exc:
                 result['errors'].append({'message_id': hit['message_id'], 'error': str(exc)})
                 result['status'] = 'partial'
@@ -109,6 +127,7 @@ def mine(team, *, kind=None, template_sha=None, cursor=None, text=None,
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--team', required=True)
+    p.add_argument('--as', dest='actor', required=True)
     p.add_argument('--repo', type=Path)
     p.add_argument('--timeout', type=float, default=15)
     p.add_argument('--kind', choices=KINDS)

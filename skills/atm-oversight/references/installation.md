@@ -63,13 +63,25 @@ have different meanings. No sender is installed by these scripts.
    available in the scheduler and oversight execution environments. These
    environments must reach the monitored repos and local ATM/Herdr services.
 3. Copy `assets/monitor.example.json` to a deployment-owned config file. Set each
-   candidate team's `name`, `repo`, and optional `worktrees`. Paths resolve
+   candidate team's `name`, explicit querying `actor`, `repo`, and optional `worktrees`. Paths resolve
    relative to the config file; absolute paths are also accepted. JSON paths
    do not expand shell variables or `~`.
    Install the separate `oversight-onboarding` skill and use it to add each
    active phase to the team's `projects` array with an evidence-backed
    `start_time`. Multiple overlapping phases in the same repo are supported.
    The empty example array requires onboarding; it is not a production scope.
+   The actor is never inferred from `.atm.toml` or the caller environment.
+   ATM task and mail queries pass `--as` and `--team`; `doctor` and `members`
+   expose only `--team`, so their subprocess environment explicitly pins
+   `ATM_IDENTITY` and `ATM_TEAM`. The global template catalog has no actor/team
+   selector. Standalone ATM collectors and message mining require `--as` too.
+   Each phase tick records `atm doctor --json` and gates on
+   `daemon_context.http_api_version`, not the release number. Task collection
+   uses BA.4's `atm task list --all --json` and `atm task events ID --json`
+   for HTTP API major 1, version 1.6.0 or later. Pre-BA, unknown, future-major,
+   and transitional 1.5.x task APIs remain explicitly unavailable; no legacy
+   task-flag or direct-database fallback is attempted. Mail, members, doctor,
+   and repository observations can still be collected during this transition.
 4. Select separate activity and phase state directories, such as
    `<state>/activity` and `<state>/phases`. Use stable paths throughout the
    pilot. Temporary storage is acceptable initially; losing it loses history.

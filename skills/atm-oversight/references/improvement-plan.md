@@ -94,13 +94,16 @@ Live Stage 1 testing on September 11 found `migrated` and `started` events
 rejected by the installed pre-BA reader. Fenix's subsequent assessment and
 read-only schema checks established a Phase BA database/pre-BA 1.5.14 binary
 mismatch, not a missing-event fix suitable for develop. The local reader shim
-is superseded by BA.2; coordinate an approved matching Phase BA deployment and
+was deleted as superseded by BA.2; coordinate an approved matching Phase BA deployment and
 validate task writes as well as reads. Track remediation in
-[atm-core #1409](https://github.com/randlee/atm-core/issues/1409) and separate
+[atm-core #1409](https://github.com/randlee/atm-core/issues/1409) (closed as superseded;
+live acceptance is on Fenix's host-switch checklist) and separate
 schema/outage error classification in
 [atm-core #1410](https://github.com/randlee/atm-core/issues/1410).
-Keep affected histories unavailable until full retests pass. Adapt collectors
-to BA.4's `atm task list` / `atm task events` command surface when deployed.
+Keep affected histories unavailable until full retests pass. The updated
+adapter targets BA.4's `atm task list` / `atm task events`; validate it live
+once the matching HTTP API 1.6.x+ pair is deployed. Transitional 1.5.x remains
+unavailable in this adapter instead of falling back to obsolete CLI flags.
 
 | Priority | Improvement | Completion evidence |
 |---|---|---|

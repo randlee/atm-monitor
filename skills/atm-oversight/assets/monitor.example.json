@@ -5,6 +5,7 @@
   "teams": [
     {
       "name": "atm-dev",
+      "actor": "your-monitor-identity",
       "repo": "/absolute/path/to/monitored-repository",
       "projects": [],
       "worktrees": []

@@ -9,7 +9,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts' / 'oversight'))
 sys.path.insert(0, str(ROOT / 'scripts' / 'cron'))
-from mine_messages import mine
+from mine_messages import mine, parse_escalation_summary
 from report import ci_marker, render, qa_evidence
 from branch_tree import build_tree, render_tree
 from discovery import discover
@@ -29,23 +29,24 @@ class MiningTests(unittest.TestCase):
                 return [{'template_type': 'qa-task', 'template_sha': sha} for sha in ['a1', 'a2']]
             sha = cmd[cmd.index('--template-sha') + 1]
             return {'hits': [hit(sha)], 'next_cursor': 'next' if sha == 'a1' else None}
-        result = mine('a', kind='qa-task', query=query)
+        result = mine('a', actor='team-lead', kind='qa-task', query=query)
         self.assertEqual(len(result['messages']), 2)
         self.assertEqual(result['status'], 'partial')
         self.assertEqual(result['pages'][0], {'template_sha': 'a1', 'next_cursor': 'next'})
-        self.assertTrue(all('--team' in cmd for cmd in calls[1:]))
+        self.assertTrue(all('--team' in cmd and '--as' in cmd for cmd in calls[1:]))
+        self.assertTrue(all(cmd[cmd.index('--as') + 1] == 'team-lead' for cmd in calls[1:]))
 
     def test_missing_catalog_is_coverage_failure_not_no_work(self):
-        result = mine('a', kind='dev-task', query=lambda cmd: [])
+        result = mine('a', actor='team-lead', kind='dev-task', query=lambda cmd: [])
         self.assertEqual(result['status'], 'unavailable')
 
     def test_cross_team_evidence_is_rejected(self):
-        result = mine('a', query=lambda cmd: {'hits': [hit(team='b')]})
+        result = mine('a', actor='team-lead', query=lambda cmd: {'hits': [hit(team='b')]})
         self.assertEqual(result['status'], 'unavailable')
         self.assertEqual(result['messages'], [])
 
     def test_duplicates_and_reverse_arrival_produce_ordered_evidence(self):
-        result = mine('a', query=lambda cmd: {'hits': [hit('m2', '2026-09-10T02:00:00Z'), hit(), hit()]})
+        result = mine('a', actor='team-lead', query=lambda cmd: {'hits': [hit('m2', '2026-09-10T02:00:00Z'), hit(), hit()]})
         self.assertEqual([h['message_id'] for h in result['messages']], ['m1', 'm2'])
 
     def test_body_budget_and_nonmutating_command(self):
@@ -55,7 +56,7 @@ class MiningTests(unittest.TestCase):
             if cmd[1] == 'search':
                 return {'hits': [hit('m1'), hit('m2')]}
             return {'mutation_applied': False, 'message': {'message_id': 'm2', 'text': 'evidence'}}
-        result = mine('a', with_bodies=True, max_bodies=1, query=query)
+        result = mine('a', actor='team-lead', with_bodies=True, max_bodies=1, query=query)
         self.assertEqual(result['bodies_omitted'], 1)
         self.assertEqual(result['messages'][1]['body'], 'evidence')
         self.assertTrue(all(cmd[1] in {'search', 'peek'} for cmd in calls))
@@ -65,7 +66,7 @@ class MiningTests(unittest.TestCase):
             if cmd[1] == 'search':
                 return {'hits': [hit()]}
             raise ValueError('source unavailable')
-        result = mine('a', with_bodies=True, query=query)
+        result = mine('a', actor='team-lead', with_bodies=True, query=query)
         self.assertEqual(result['status'], 'partial')
         self.assertEqual(len(result['messages']), 1)
         self.assertEqual(len(result['errors']), 1)
@@ -73,7 +74,7 @@ class MiningTests(unittest.TestCase):
     def test_mutation_flag_or_wrong_message_is_not_accepted(self):
         for payload in [{'mutation_applied': True, 'message': {'message_id': 'm1', 'text': 'bad'}},
                         {'mutation_applied': False, 'message': {'message_id': 'm2', 'text': 'bad'}}]:
-            result = mine('a', with_bodies=True,
+            result = mine('a', actor='team-lead', with_bodies=True,
                           query=lambda cmd: {'hits': [hit()]} if cmd[1] == 'search' else payload)
             self.assertNotIn('body', result['messages'][0])
             self.assertEqual(result['status'], 'partial')
@@ -83,13 +84,43 @@ class MiningTests(unittest.TestCase):
             if cmd[1] == 'templates':
                 return [{'template_type': 'qa-task', 'template_sha': sha} for sha in ['a', 'b']]
             return {'hits': []}
-        result = mine('a', kind='qa-task', max_templates=1, query=query)
+        result = mine('a', actor='team-lead', kind='qa-task', max_templates=1, query=query)
         self.assertEqual(result['remaining_template_shas'], ['b'])
         self.assertEqual(result['status'], 'partial')
 
     def test_cursor_requires_its_revision(self):
         with self.assertRaises(ValueError):
-            mine('a', kind='qa-task', cursor='opaque')
+            mine('a', actor='team-lead', kind='qa-task', cursor='opaque')
+
+    def test_identity_is_required_before_query_invocation(self):
+        calls = []
+        with self.assertRaises(ValueError):
+            mine('a', actor='', query=lambda cmd: calls.append(cmd))
+        self.assertEqual(calls, [])
+
+    def test_escalation_summary_preserves_unknown_kind(self):
+        self.assertEqual(parse_escalation_summary('escalation:future-kind:agent@team'),
+                         {'kind': 'future-kind', 'agent': 'agent', 'team': 'team'})
+        self.assertIsNone(parse_escalation_summary('escalation:future-kind agent@team'))
+
+    def test_escalation_metadata_is_attached_to_retrieved_body(self):
+        def query(cmd):
+            if cmd[1] == 'search':
+                return {'hits': [hit()]}
+            return {'mutation_applied': False,
+                    'message': {'message_id': 'm1', 'text': 'escalation:future-kind:agent@team'}}
+        result = mine('a', actor='team-lead', with_bodies=True, query=query)
+        self.assertEqual(result['messages'][0]['escalation']['kind'], 'future-kind')
+
+    def test_escalation_metadata_uses_summary_when_body_is_prose(self):
+        def query(cmd):
+            if cmd[1] == 'search':
+                return {'hits': [hit()]}
+            return {'mutation_applied': False, 'message': {'message_id': 'm1',
+                    'summary': 'escalation:new-kind:worker@a', 'text': 'Please investigate this episode.'}}
+        result = mine('a', actor='monitor', with_bodies=True, query=query)
+        self.assertEqual(result['messages'][0]['escalation'],
+                         {'kind': 'new-kind', 'agent': 'worker', 'team': 'a'})
 
 
 class ReportingTests(unittest.TestCase):

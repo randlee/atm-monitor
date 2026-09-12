@@ -41,7 +41,7 @@ An activity observation is a discovery clue, not proof of a phase start time.
 Run from this skill directory with the configured Python interpreter:
 
 ```sh
-python scripts/configure_project.py --config /path/to/monitor.json --team atm-dev --repo /path/to/repo --phase BA --start-time 2026-09-11T00:00:00Z --evidence '<actual plan/task/message reference>'
+python scripts/configure_project.py --config /path/to/monitor.json --team atm-dev --as <actor> --repo /path/to/repo --phase BA --start-time 2026-09-11T00:00:00Z --evidence '<actual plan/task/message reference>'
 python -m unittest discover -s tests -q
 ```
 

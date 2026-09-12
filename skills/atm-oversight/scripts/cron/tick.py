@@ -26,6 +26,8 @@ def load_config(path):
         if team['name'] in seen:
             raise ValueError('duplicate team: ' + team['name'])
         seen.add(team['name'])
+        if not isinstance(team.get('actor'), str) or not team['actor'].strip():
+            raise ValueError('each team needs an explicit ATM actor')
         if not isinstance(team.get('repo'), str):
             raise ValueError('each team needs a repo path')
         repo = (path.parent / team['repo']).resolve()
@@ -73,8 +75,10 @@ def jobs(config):
     timeout = config.get('timeout_seconds', 15)
     result = [('herdr', 'herdr', {'timeout': timeout})]
     for team in config['teams']:
-        for kind in ('roster', 'tasks', 'ci', 'git', 'worktrees'):
+        for kind in ('doctor', 'roster', 'ci', 'git', 'worktrees'):
             options = {'repo': team['repo'], 'team': team['name'], 'timeout': timeout}
+            if kind in {'doctor', 'roster'}:
+                options['actor'] = team.get('actor')
             if kind in {'ci', 'git'}:
                 options['start_time'] = project_start(team)
             result.append((team['name'] + '/' + kind, kind, options))
@@ -94,12 +98,21 @@ def run_tick(config, state_dir, collector=collect):
         old_teams = {team['name']: team for team in (previous or {}).get('teams', [])}
         changed = {team['name'] for team in config['teams']
                    if any(team.get(field) != old_teams.get(team['name'], {}).get(field)
-                          for field in ('repo', 'projects'))}
+                          for field in ('repo', 'projects', 'actor'))}
         specifications = jobs(config)
         with ThreadPoolExecutor(max_workers=4) as pool:
             futures = [(key, pool.submit(collector, kind, **options))
                        for key, kind, options in specifications]
             sources = {key: future.result() for key, future in futures}
+            task_futures = []
+            for team in config['teams']:
+                doctor = sources[team['name'] + '/doctor']
+                context = (doctor.get('data') or {}).get('daemon_context', {}) if doctor['status'] == 'ok' else {}
+                task_futures.append((team['name'] + '/tasks', pool.submit(
+                    collector, 'tasks', repo=team['repo'], team=team['name'],
+                    actor=team.get('actor'), daemon_context=context,
+                    timeout=config.get('timeout_seconds', 15))))
+            sources.update({key: future.result() for key, future in task_futures})
             additional = []
             for team in config['teams']:
                 ci = sources[team['name'] + '/ci']
@@ -133,6 +146,8 @@ def run_tick(config, state_dir, collector=collect):
             # task history each tick until ATM supplies a reliable event cursor.
             event_futures = [(key, pool.submit(collector, 'task-events',
                               repo=team['repo'], team=team['name'], task_id=task_id,
+                              actor=team.get('actor'),
+                              daemon_context=sources[team['name'] + '/tasks'].get('daemon_context', {}),
                               timeout=config.get('timeout_seconds', 15)))
                              for key, team, task_id in pending]
             for key, future in event_futures:

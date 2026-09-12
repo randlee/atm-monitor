@@ -3,11 +3,16 @@ from pathlib import Path
 import subprocess
 import sys
 import unittest
+from functools import partial
 
 CRON = Path(__file__).resolve().parents[1] / 'scripts' / 'cron'
 sys.path.insert(0, str(CRON))
 from collectors import collect, KINDS, MAX_OUTPUT_BYTES
 from github_inventory import collect_prs, latest_by_branch
+
+# Parser/transport fixtures below assume an already-observed supported daemon.
+# Runtime discovery and rejection paths are exercised in test_atm_contract.py.
+collect = partial(collect, actor='monitor', daemon_context={'http_api_version': '1.6.0'})
 
 
 def connection(rows, cursor=None):

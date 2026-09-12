@@ -10,20 +10,41 @@ primary key and CHECK constraints, the timestamped pre-BA2 backup, 17 migrated
 events, and one started event. BA.2 already defines the matching event variants.
 Fenix also reports task assignment writes failing the BA schema constraints.
 
-The local atm-core `codex/task-event-reader-fix` commit `12f9eb3a0` restores
+The former local atm-core `codex/task-event-reader-fix` commit `12f9eb3a0` restored
 reads only; it is **superseded and must not be merged as the remediation**.
 Its passing tests do not establish compatibility with the live BA schema.
 The initial diagnosis below did not account for schema provenance or task
 write compatibility and is retained as historical investigation evidence.
 
-Track deployment and full retest in
-[atm-core #1409](https://github.com/randlee/atm-core/issues/1409). Keep it open
-until a matching Phase BA deployment passes both repro commands and two complete
-collection ticks. Binary switching or backup restoration remains an operator
-decision. The separate decode-versus-outage classification gap is
+Per Fenix's cleanup receipt `01M29JHY0MN67DSWNP6RRPNE1S`, Rand authorized
+deletion of that unpushed branch and worktree; they are no longer available.
+[atm-core #1409](https://github.com/randlee/atm-core/issues/1409) is closed as
+not planned, superseded by Phase BA. The two repro queries and two complete
+collection ticks are now on Fenix's Phase BA host-switch acceptance checklist.
+Binary switching or backup restoration remains an operator decision.
+The separate decode-versus-outage classification gap is
 [atm-core #1410](https://github.com/randlee/atm-core/issues/1410), targeting develop.
-BA.4 also changes the collector command surface to `atm task list` and
-`atm task events`; adapt and validate the collectors when that CLI is deployed.
+BA.4 changes the collector command surface to `atm task list` and
+`atm task events`; the updated adapter targets that contract.
+
+## Phase BA query adapter
+
+Fenix's guidance `01M29JDFFCSTB9RVVXXP4H5T4Z` makes the final Phase BA contract
+the implementation target. The monitor now collects doctor metadata and gates
+tasks on `daemon_context.http_api_version`, requires a configured query actor,
+and uses `atm task list --all --json` / `atm task events ID --json` for API
+major 1 at version 1.6.0 or later. API 1.5.x is a recognized but unsupported
+transition in this adapter; task rows remain unavailable until BA.4 is usable.
+Unknown versions and future major versions also remain unavailable.
+No direct database or legacy task-flag fallback is part of the runtime.
+
+A live check at September 12, 01:11 UTC observed release 1.5.14 with HTTP API
+1.3.0. Task collection returned `pre-ba-task-api` before any ledger query;
+roster collection succeeded with seven members. Regression tests cover that
+query suppression, one doctor observation shared across a tick, supported
+command selection, explicit actor/team inputs, and unknown event/state/outcome
+strings. Validation passed 138 monitoring tests, 10 onboarding tests, and 9
+distribution tests. These are adapter tests, not live acceptance against a BA.4 daemon.
 
 ## Historical validation
 

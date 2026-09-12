@@ -34,7 +34,7 @@ Read-only report requests do not require a model to reconstruct status from
 memory. The script can include structured QA evidence produced below.
 
 For current QA details, use
-`python scripts/oversight/mine_messages.py --team <team> --kind qa-report --with-bodies`
+`python scripts/oversight/mine_messages.py --team <team> --as <actor> --kind qa-report --with-bodies`
 and save its JSON output to a local evidence file. Pass that path through
 the report's `--qa-evidence` option. The renderer requires a matching PR and
 full commit SHA before applying a verdict or finding count.
