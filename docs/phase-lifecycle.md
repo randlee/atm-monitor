@@ -7,6 +7,16 @@ implemented and existing deployment phases have not been marked complete.
 
 ## Expected discovery and planning flow (Rand)
 
+The general activity cron runs continuously, including while repo-specific jobs
+are active. Its deterministic qualification of planning or development evidence
+triggers Omega-prime, who enables/reuses the repository phase-monitoring cron.
+The activity cron does not itself perform agent reasoning or phase onboarding.
+While that repository handoff is pending or monitoring is active, suppress
+further activity-monitor agent triggers for the repo. Other repositories remain
+eligible. The repo-specific cron then owns that repo's phases and additional
+phase discovery. Inactivity alone neither closes a phase nor stops its cron.
+
+
 Rand clarified the required oversight behavior on September 12, 2026. This
 flow governs the lifecycle design below; it is not a description of runtime
 capabilities already implemented.

@@ -8,6 +8,16 @@ it through planning and development. Do not just return agent process states.
 
 ## From activity to significant work
 
+The activity cron runs continuously. It qualifies planning/development evidence
+without an LLM, then triggers Omega-prime once to enable/reuse the repository's
+phase-monitoring cron. Omega-prime performs the onboarding/startup handoff;
+the detector does not need to provision cron itself. Pending/active repo
+ownership suppresses further activity-monitor agent triggers for that repo,
+while the general cron continues discovering work in other repositories.
+Do not pause the repo job merely because agents become quiet: any open phase
+keeps its repo monitoring active until an evidenced closure decision.
+
+
 The general activity cron runs deterministic checks without an LLM. It resolves
 actor/team/repository from roster and worktree evidence, then checks bounded
 template-declared message metadata/variables and Git/PR artifacts

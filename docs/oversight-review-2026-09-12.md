@@ -18,6 +18,13 @@ LLM wake on every detector observation and call that the completed design.
 
 ## Accepted lifecycle
 
+The activity cron runs continuously. Qualified planning/development activity
+triggers Omega-prime, who enables the repo-specific phase-monitoring cron.
+Pending/active ownership then suppresses subsequent activity-monitor agent
+triggers for that repo. Cron detection and agent-managed startup are distinct;
+this does not require the detector itself to create scheduler jobs. Inactivity
+is not a reason to pause a repo with open phases.
+
 | State/event | Evidence | Repository cron consequence |
 |---|---|---|
 | activity-detected | Candidate process/roster/Git observation | No agent wake from this alone |
