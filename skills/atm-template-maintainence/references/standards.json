@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "scope": "ATM templates consumed by atm-monitor; unknown types require explicit classification",
+  "types": {
+    "dev-task": {
+      "metadata": {
+        "type": "dev-task",
+        "tags": [
+          "stage:dev"
+        ],
+        "workflow": {
+          "scope": {
+            "kind": "sprint",
+            "variable": "sprint"
+          },
+          "state": "dev-start",
+          "stage": "dev",
+          "transition": "start"
+        }
+      },
+      "producer_paths": [
+        ".claude/skills/codex-orchestration/dev-template.xml.j2"
+      ],
+      "basis": "Fenix template metadata rollout PR #1434; installed declaration inspected 2026-09-12"
+    },
+    "qa-task": {
+      "metadata": {
+        "type": "qa-task",
+        "tags": [
+          "stage:qa"
+        ],
+        "workflow": {
+          "scope": {
+            "kind": "sprint",
+            "variable": "sprint"
+          },
+          "state": "qa-start",
+          "stage": "qa",
+          "transition": "start"
+        }
+      },
+      "producer_paths": [
+        ".claude/skills/codex-orchestration/qa-template.xml.j2"
+      ],
+      "basis": "Fenix template metadata rollout PR #1434; installed declaration inspected 2026-09-12"
+    },
+    "review-task": {
+      "metadata": {
+        "type": "review-task",
+        "tags": [
+          "stage:review"
+        ],
+        "workflow": {
+          "scope": {
+            "kind": "phase",
+            "variable": "phase"
+          },
+          "state": "review-start",
+          "stage": "review",
+          "transition": "start"
+        }
+      },
+      "producer_paths": [
+        ".claude/skills/codex-orchestration/review-template.xml.j2"
+      ],
+      "basis": "Fenix template metadata rollout PR #1434; installed declaration inspected 2026-09-12"
+    },
+    "fix-task": {
+      "metadata": {
+        "type": "fix-task",
+        "tags": [
+          "stage:fix"
+        ],
+        "workflow": {
+          "scope": {
+            "kind": "phase",
+            "variable": "phase"
+          },
+          "state": "fix-start",
+          "stage": "fix",
+          "transition": "start"
+        }
+      },
+      "producer_paths": [
+        ".claude/skills/codex-orchestration/fix-assignment.xml.j2"
+      ],
+      "basis": "Fenix template metadata rollout PR #1434; installed declaration inspected 2026-09-12"
+    },
+    "plan-scope-review": {
+      "metadata": {
+        "type": "plan-scope-review",
+        "tags": [
+          "stage:plan"
+        ],
+        "workflow": {
+          "scope": {
+            "kind": "phase",
+            "variable": "phase"
+          },
+          "state": "plan-scope-review",
+          "stage": "plan",
+          "transition": "scope-review",
+          "iteration_variable": "round_index"
+        }
+      },
+      "producer_paths": [
+        ".claude/skills/plan-hardening/01-plan-scope-review.xml.j2"
+      ],
+      "basis": "Fenix template metadata rollout PR #1434; installed declaration inspected 2026-09-12"
+    },
+    "plan-sprint-hardening": {
+      "metadata": {
+        "type": "plan-sprint-hardening",
+        "tags": [
+          "stage:plan"
+        ],
+        "workflow": {
+          "scope": {
+            "kind": "phase",
+            "variable": "phase"
+          },
+          "state": "plan-sprint-hardening",
+          "stage": "plan",
+          "transition": "sprint-hardening",
+          "iteration_variable": "round_index"
+        }
+      },
+      "producer_paths": [
+        ".claude/skills/plan-hardening/02-sprint-scope-hardening.xml.j2"
+      ],
+      "basis": "Fenix template metadata rollout PR #1434; installed declaration inspected 2026-09-12"
+    },
+    "plan-consistency-hardening": {
+      "metadata": {
+        "type": "plan-consistency-hardening",
+        "tags": [
+          "stage:plan"
+        ],
+        "workflow": {
+          "scope": {
+            "kind": "phase",
+            "variable": "phase"
+          },
+          "state": "plan-consistency-hardening",
+          "stage": "plan",
+          "transition": "consistency-hardening",
+          "iteration_variable": "round_index"
+        }
+      },
+      "producer_paths": [
+        ".claude/skills/plan-hardening/03-consistency-hardening.xml.j2"
+      ],
+      "basis": "Fenix template metadata rollout PR #1434; installed declaration inspected 2026-09-12"
+    },
+    "plan-critical-review": {
+      "metadata": {
+        "type": "plan-critical-review",
+        "tags": [
+          "stage:plan"
+        ],
+        "workflow": {
+          "scope": {
+            "kind": "phase",
+            "variable": "phase"
+          },
+          "state": "plan-critical-review",
+          "stage": "plan",
+          "transition": "critical-review",
+          "iteration_variable": "round_index"
+        }
+      },
+      "producer_paths": [
+        ".claude/skills/plan-hardening/plan-critical-review.xml.j2"
+      ],
+      "basis": "Fenix template metadata rollout PR #1434; installed declaration inspected 2026-09-12"
+    },
+    "plan-review-notice": {
+      "metadata": {
+        "type": "plan-review-notice",
+        "tags": [
+          "stage:plan"
+        ],
+        "workflow": {
+          "scope": {
+            "kind": "phase",
+            "variable": "phase"
+          },
+          "state": "plan-review-notice",
+          "stage": "plan",
+          "transition": "notice",
+          "iteration_variable": "round_index"
+        }
+      },
+      "producer_paths": [
+        ".claude/skills/plan-hardening/plan-review-notice.xml.j2"
+      ],
+      "basis": "Fenix template metadata rollout PR #1434; installed declaration inspected 2026-09-12"
+    },
+    "qa-report": {
+      "metadata": {
+        "type": "qa-report"
+      },
+      "producer_paths": [],
+      "basis": "Existing registered standard type; workflow/tag contract not yet standardized, do not invent outcome semantics"
+    }
+  },
+  "revision_expectations": {
+    "5df2a8350ae80b41038852616236470b14ff39efb985da0334ff0832c0594af8": {
+      "expected_type": "review-task",
+      "source_path": ".claude/skills/codex-orchestration/review-template.xml.j2",
+      "evidence": "Source mapping supplied by Rand 2026-09-12; immutable historical revision"
+    },
+    "b5cb960980db48b63b684855f7017a54e00ee1aae7a19f36a10b7011410305f6": {
+      "expected_type": "dev-task",
+      "source_path": ".claude/skills/codex-orchestration/dev-template.xml.j2",
+      "evidence": "Source mapping supplied by Rand 2026-09-12; immutable historical revision"
+    },
+    "2ce7130721823ae31be2b7a13df1de1d011f3332e230c1df11734ab9e8a4d54f": {
+      "expected_type": "dev-task",
+      "source_path": ".claude/skills/codex-orchestration/dev-template.xml.j2",
+      "evidence": "Source mapping supplied by Rand 2026-09-12; immutable historical revision"
+    },
+    "c26bae55ef3a24f7b1577de72128ca2a372728c5ac1a7d5be72053d2024b019a": {
+      "expected_type": "qa-task",
+      "source_path": ".claude/skills/codex-orchestration/qa-template.xml.j2",
+      "evidence": "Source mapping supplied by Rand 2026-09-12; immutable historical revision"
+    }
+  }
+}

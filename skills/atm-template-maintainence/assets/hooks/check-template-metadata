@@ -1,0 +1,10 @@
+#!/bin/sh
+# Post-registration validation: check one admitted immutable template revision.
+# This reports policy failure; it does not undo registration or send messages.
+set -eu
+if [ "$#" -ne 1 ]; then
+    echo 'Usage: check-template-metadata TEMPLATE_SHA' >&2
+    exit 2
+fi
+metadata_skill_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+exec "${ATM_METADATA_PYTHON:-python3}" "$metadata_skill_root/scripts/audit_metadata.py" --strict --template-sha "$1"
