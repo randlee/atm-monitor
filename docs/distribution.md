@@ -1,69 +1,39 @@
-# Self-contained skill distribution
+# Verified deployment and recovery (O4)
 
-`atm-monitor` is the authoritative source for all oversight scripts, skills,
-and documents. Edit and test here first, then distribute. The complete runtime
-unit is `skills/atm-oversight/`:
-
-```text
-atm-oversight/
-  SKILL.md
-  scripts/cron/          # the two scheduled jobs and their collectors/state code
-  scripts/oversight/     # reports, investigation, intervention records
-  scripts/              # naming/plan helpers
-  references/           # policies, procedures, installation, improvement plan
-  assets/               # config and hook examples
-  tests/                # standalone unit/Git integration tests
-```
-
-Investigation and repository consistency are procedures within this skill.
-`skills/oversight-onboarding/` is a separate self-contained skill, with its
-own settings script and tests. It handles newly discovered phases and adds
-independent phase scopes to the deployment's repo-monitoring catalog.
-Run the documented `scripts/...` commands from the installed skill directory.
-Runtime config and monitoring state live outside the installed bundle.
-
-## Install or upgrade
-
-Quiesce scheduled callers before upgrading. Run from the atm-monitor checkout:
+Edit the master skills in this repository, test the affected behavior, and
+publish a verified bundle. Preserve runtime state and unrelated profile memory.
+Do not call a successful install proof that the four outcomes work.
 
 ```sh
+python3 -m unittest discover -s skills/atm-oversight/tests -v
+python3 -m unittest discover -s skills/oversight-onboarding/tests -v
+python3 -m unittest discover -s tests -v
 python3 scripts/distribute_skill.py --target /deployment/skills/atm-oversight --archive-dir /deployment-archives
 python3 scripts/distribute_skill.py --target /deployment/skills/atm-oversight --verify
-python3 -m unittest discover -s /deployment/skills/atm-oversight/tests -q
-python3 scripts/distribute_skill.py --source skills/oversight-onboarding --target /deployment/skills/oversight-onboarding --archive-dir /deployment-archives
-python3 scripts/distribute_skill.py --target /deployment/skills/oversight-onboarding --verify
-python3 -m unittest discover -s /deployment/skills/oversight-onboarding/tests -q
 ```
 
-The target and archive must be on the same filesystem. Keep the archive outside
-every skill discovery directory; otherwise a harness could load retired skills.
-The installer stages and checks the complete bundle before publication, records
-a content-hash receipt, and retains the old installed directory for rollback.
-The two rename operations require quiescent callers; they are not a transaction
-for a concurrently executing agent. A failed publication attempts to restore
-the previous installation. Staging failures leave the old installation intact.
+Quiesce scheduled callers during bundle replacement and resume them afterward.
+The target and archive must share a filesystem; keep the archive outside skill
+discovery directories. The installer verifies staged hashes, preserves the prior
+bundle and attempts restoration if publication fails. Modified deployed files
+are preserved for reconciliation rather than overwritten blindly.
 
-An identical install is a no-op. Changed or untracked deployed files cause an
-upgrade to stop rather than overwrite local work. Preserve those changes,
-port intended fixes into atm-monitor, validate, then redistribute. Do not put
-state/config/logs inside the bundle. Python bytecode caches are ignored.
+The optional oversight-onboarding bundle configures the table's repository/phase
+scope. Install it with `--source skills/oversight-onboarding` and a corresponding
+target. It does not implement lifecycle automation.
 
-To roll back, quiesce callers, preserve the current target in another archive
-directory, then move the reported backup to the target and run `--verify`.
-Keep the matching deployment configuration and state-schema compatibility in
-view; restoring code does not undo external messages or state transitions.
+Omega's destinations are `hendrix/omega-prime/skills/atm-oversight` and the
+optional `hendrix/omega-prime/skills/oversight-onboarding`. Profile fragments in
+`deployments/omega-prime/profile/` route to the operating skill. Preserve other
+profile settings when applying them. Keep machine paths, secrets and receipts
+outside committed configuration.
 
-## Omega-prime rollout
+For rollback, quiesce callers, preserve the failed target, restore the recorded
+backup and verify it before resuming. Check state-schema compatibility; rollback
+does not undo sent messages. After any update or recovery, verify an actual
+scheduled run and its table/alert/error behavior. A missed run needs a watchdog
+outside the failed job. Escalate persistent defects to amon@atm-monitor with
+question/job identity, failure evidence, attempted recovery and impact.
 
-The deployment destinations are `hendrix/omega-prime/skills/atm-oversight/`
-and `hendrix/omega-prime/skills/oversight-onboarding/`.
-Hermes loads it as an external skill directory through the selected profile's
-configuration. No runtime-only copy is maintained. Deployment-specific profile
-documents originate under `deployments/omega-prime/` in this repository.
-
-The staged rollout and acceptance criteria are in
-[the rollout document](../deployments/omega-prime/rollout.md). Local legacy
-archives, generated machine configuration, and test evidence live under
-`.local/` in this repository; they are intentionally excluded from Git because
-they contain machine paths and historical agent context. The legacy archive's
-manifest records each original path, archive member, and SHA-256 hash.
+The four-outcome scope cleanup is a repository change. It has not replaced the
+installed runtime or established that missing idle/stuck-CI behavior exists.

@@ -1,5 +1,0 @@
-#!/bin/sh
-set -eu
-repo_root=$(git rev-parse --show-toplevel)
-: "${ATM_MONITOR_SKILL_ROOT:?Set ATM_MONITOR_SKILL_ROOT to the installed atm-oversight skill directory}"
-exec "${ATM_MONITOR_PYTHON:-python3}" "$ATM_MONITOR_SKILL_ROOT/scripts/check_naming.py" --repo "$repo_root" --pre-push

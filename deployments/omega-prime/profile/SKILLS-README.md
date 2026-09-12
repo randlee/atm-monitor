@@ -1,12 +1,6 @@
-# Omega-prime oversight skill deployment
+# Omega oversight skills
 
-`atm-oversight/` and `oversight-onboarding/` are self-contained bundles from the atm-monitor
-repository. Its master scripts, instructions, references, examples, and tests
-are maintained in atm-monitor first, then distributed together with a hash
-receipt. Do not make permanent edits to the deployed copy.
-
-The previous phase-oversight implementation is archived outside the skills
-search path. Use `atm-oversight/SKILL.md` and the supplied rollout document for
-current behavior. On new phase discovery, use `oversight-onboarding/SKILL.md`
-to add evidence-backed start times and local worktrees. Preserve overlapping
-phases in the same repository. Other profile skills retain their existing provenance.
+Load atm-oversight/SKILL.md for the four-output operating contract.
+The optional oversight-onboarding helper configures table scope only.
+Distribute verified bundles using docs/distribution.md in atm-monitor.
+Profile fragments here support that operation; they are not a separate policy.

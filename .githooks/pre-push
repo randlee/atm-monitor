@@ -1,5 +1,4 @@
 #!/bin/sh
-# Preserve Git's ref-update stdin for any additional checks composed here.
 set -eu
 repo_root=$(git rev-parse --show-toplevel)
-exec "${ATM_METADATA_PYTHON:-python3}" "$repo_root/skills/atm-template-maintainence/scripts/check_push.py"
+exec "${ATM_MONITOR_PYTHON:-python3}" "$repo_root/scripts/check_source_limit.py" push "$1"

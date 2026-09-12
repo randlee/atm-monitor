@@ -1,193 +1,85 @@
 ---
 name: atm-oversight
-description: Detect significant project activity, establish phase planning and development state from evidence, record phase events, and report or investigate monitored ATM work.
+description: Report phase and sprint status, investigate assigned-but-idle agents and CI or merge blockers, and recover monitoring failures.
 ---
 
 # ATM oversight
 
-This is a self-contained skill. Run commands from the directory containing
-this `SKILL.md`, using the deployment's configured Python interpreter, config,
-and state paths. All scripts and references are inside this directory.
-The configuration and current snapshot identify the monitored teams.
+Deliver exactly four outcomes: a useful phase/sprint table, assigned-but-idle
+alerts, CI/merge-readiness alerts, and self-healing. The
+[requirements](references/requirements.md) define the contract. Existing scripts
+are not proof it is implemented; report their actual limitations.
 
-The authoritative source is `atm-monitor/skills/atm-oversight`. Installed copies
-are distribution artifacts: propose fixes in atm-monitor, test, then distribute
-the whole bundle. Do not patch a deployed script or policy as a permanent fix.
-Read the deployment's rollout instructions before enabling schedules or sends.
+## Continuous operation
 
-## Your responsibility: discover and follow the work
+Read configured repos/phases, saved state, query checkpoints and pending
+incidents. Verify actual scheduled execution. Restore authorized missing
+monitoring and recover missed windows; registration or manual testing alone
+is not proof of operation. Keep each repo independent and routine ticks quiet.
 
-On startup and each actionable wake, compare live behavior against
-[operating expectations](references/operating-expectations.md). Investigate and
-escalate deviations to the maintainer without waiting for Rand to ask. Current
-continuous-monitoring authorization supersedes historical Stage 1 manual-only
-instructions; use actual scheduled receipts to verify operation.
+Cron runs independent questions, combines successful state, saves it and decides
+from changes plus current state. Do not turn an investigation into one collector.
+Do not scan all historical tasks every tick. A failure in one question does not
+stop healthy questions or other repos.
 
-Act from this skill and the evidence without requiring Rand to direct each
-monitoring step. Excessive, duplicate, or unjustified agent triggers are
-monitoring defects: escalate to `amon@atm-monitor` with wake/event identities,
-times, reasons, prior handling state, and deployed revision. The maintainer
-owns fixes to master scripts/skills and redistribution. Do not make Rand debug
-wake frequency or patch deployed copies yourself. Follow the deduplicated
-maintainer route in [notification policy](references/notification-policy.md).
+## Phase/sprint table
 
-Do not wait for an existing PR or phase configuration to tell you planning has
-started. The general activity cron must establish planning/development work
-from template-declared message metadata and Git/PR evidence before waking you; agent activity
-alone is insufficient. You validate a qualified handoff and establish its
-phase context. Repos already pending/active in the monitoring registry must
-not trigger you from the activity cron again; their repo cron owns the work. Never use message prose or task descriptions as the automatic planning trigger.
-A couple of questions to an agent is
-not a new phase. A newly used planning branch plus phase-bound plan-hardening
-assignments/artifacts is evidence of substantive planning. An open PR from a
-`plan/*` source branch also establishes planning; its merge signals plan ready.
-Record these PR milestones with source timestamps. Plan ready is distinct from
-development started or phase complete.
+Show every sprint in scope, including unstarted and completed ones. Include
+branch hierarchy, owner/task state, DEV/QA status, iterations, B/C/I findings,
+PR/CI, blocker, next action, evidence and as-of/coverage. Retain history needed
+for this table; missing or stale evidence is not success or zero findings.
 
-On activity discovery, planning work, or a lifecycle change, read and follow
-[phase detection and event recording](references/phase-discovery.md). It defines
-significance, your next action, hardening-round counting, phase-event logging,
-and the general-cron → repo-specific-cron handoff. Record evidence before
-reporting state or metrics. Never substitute a watch-list entry, an idle agent,
-or queue disappearance for a phase state transition.
+Use source IDs to avoid duplicate counts. Keep withdrawn/resolved findings in
+history but out of open counts. Do not map Minor findings into B/C/I. Use source
+workflow metadata rather than assumed template names or hashes. When necessary,
+read a specific QA report to obtain its verdict and counts.
 
-## Closing a phase
+## Assigned but idle
 
-Follow [phase closure and repository ownership](references/phase-closure.md)
-when the phase's exact `integrate/*` PR closes or you manually close a phase.
-If that PR closed without merging, investigate its discussion and replacement
-work, then escalate findings and the proposed disposition to Rand. Incorporate
-Rand's explanation before recording a resolved abandonment/supersession outcome.
-Keep the phase open and monitored while the outcome is unresolved; record the
-PR observation separately from your evidence-backed phase closure decision.
-Use the major lifecycle `activity-detected` → `new-phase-planned` →
-`active-development` → `integration-closed`; manual closure is a separate
-terminal outcome when no integration PR exists. Planning/hardening is inside
-`new-phase-planned`; plan readiness is a milestone, not a prerequisite to
-starting monitoring. Record manual actor, reason, time, and evidence; you may
-record abandonment without inventing a PR or successful integration.
+Join fresh agent state to outstanding assignments. Check queue position,
+dependencies, recent acknowledgment and background/tool activity before calling
+work stalled. An idle observation alone is not a stalled task. If action is
+needed, alert the responsible owner with task, agent, evidence/time and next
+step. Do not restart agents or close tasks merely because monitoring flags them.
 
-One repo cron serves all its open phases. Closing one phase stops that shared
-cron only when no other phase remains open. Preserve a final report, coverage
-gaps, and unresolved incident dispositions. Record scheduler stop before
-releasing ownership and rearming discovery. A journal entry alone does not
-stop a cron: lifecycle projection, scope retirement, and scheduler integration
-remain unimplemented runtime work. Never mark the handoff finished without
-the actual scheduler receipt.
+## CI and merge readiness
 
-## New phase onboarding
+Check conflicts and merge requirements as well as failed, missing and stuck
+required checks. Inspect the exact active PR head. A conflict can prevent CI
+from starting; repeated polling is not an investigation. Distinguish pending,
+failed, absent and unknown evidence. Apply configured start/runtime thresholds.
 
-When phase monitoring returns `onboarding_requests`, invoke the separate
-`oversight-onboarding` skill for each request. It verifies the project and saves
-its repository, phase, evidence-backed `start_time`, and worktree settings in
-the deployment config. Do not guess the start time or replace an active scope
-to dismiss a request. If the skill is unavailable, return the pending request
-to the caller. Legacy configs without a start time collect repository history
-and report `unscoped_projects`; they require onboarding before continuous use.
+Determine whether an owner already has a fix assignment before alerting.
+For example, after a QA rejection, inspect that report and its follow-up task:
+a known assigned fix is different from an unowned blocker. Send actionable CI
+or conflict findings to the configured team lead/owner. Escalate unresolved
+serious project decisions to Rand, with evidence and a concrete next action.
 
-## Reporting
+## Self-healing
 
-Rand can request a complete phase report at any time. Read the latest recorded
-state immediately; do not wait for the next cron tick or require a new full
-collection. Cover every sprint in the phase plan, including not-started,
-active, and closed sprints without PRs or tasks. Show phase lifecycle and
-planning/hardening milestones; for each sprint show status, owner/assignment,
-DEV/QA/CI, B/C/I findings, blockers, and latest activity. Include evidence links,
-as-of time, and stale/unknown coverage. Missing evidence is not success, zero
-findings, or grounds to omit a sprint. Keep closed phase reports available.
+A failed script begins recovery; it does not end oversight:
 
-The current sprint renderer is an input to this report, not yet the complete
-phase projection or authoritative inventory of all planned sprints. Use the
-phase plan and recorded evidence to fill coverage explicitly until that report
-integration is implemented. An explicit report request authorizes responding
-without a notable-event trigger; routine cron ticks remain silent.
+1. Inspect its typed error: question, cause, exact command/window, diagnostics
+   and recommended repair. Retain its checkpoint and mark old evidence stale.
+2. Retry transient faults within configured backoff/budget. Repair supported
+   command/configuration problems within existing authority; rerun the same
+   question and verify its answer. Honor source rate limits.
+3. If a helper is broken, use a supported direct ATM/GitHub query for the same
+   question. Record fallback evidence and coverage; continue unaffected checks.
+4. Escalate persistent defects to amon@atm-monitor with impact, attempted repairs,
+   exact failure, fallback coverage and next action. Deduplicate unchanged faults.
+   Escalation transfers repair ownership, not responsibility for monitoring.
+5. Verify recovery and scheduled runs. Inspect failed agent wakes or deliveries;
+   a requested wake is not a delivered alert. Excessive wakes are defects too.
 
-Read the phase event log for planning/lifecycle status and hardening metrics.
-The current report script supplies sprint/branch tables, not those metrics.
-Run `python scripts/oversight/report.py --state-dir <state> --team <team>`
-from the skill directory. Return its `Sprint | DEV | QA | CI | FND` table. Preserve
-freshness and coverage notes; `—` means evidence is missing, not success.
-Read-only report requests do not require a model to reconstruct status from
-memory. The script can include structured QA evidence produced below.
+Do not reset system privacy controls, move repositories, alter the ATM database,
+restart unrelated services, or modify monitored code as a monitoring repair.
+Escalate a concrete decision if recovery requires authority you do not have.
 
-For current QA details, use
-`python scripts/oversight/mine_messages.py --team <team> --as <actor> --kind qa-report --with-bodies`
-and save its JSON output to a local evidence file. Pass that path through
-the report's `--qa-evidence` option. The renderer requires a matching PR and
-full commit SHA before applying a verdict or finding count.
+## Follow-through
 
-## Collection health before intervention
-
-Read the newest valid snapshot using `scripts/cron/state_store.py` or the
-report command. Its `sources` are the current collection results;
-`last_good` preserves older observations and must be identified as stale when
-used. A failed source, partial query, missing plan association, or empty task
-ledger does not establish that an agent has no work.
-
-Cron runs `scripts/cron/detect_activity.py --config <config> --state-dir <activity-state>`
-and `scripts/cron/monitor_phase.py --config <config> --activity-dir <activity-state>
---state-dir <phase-state>`. Use the phase state for reports, health checks,
-and intervention records. Detection maintains the watch list; phase monitoring
-makes team-specific queries. Both are read-only against ATM/GitHub. Their exits
-are 0 (silent success), 1 (attention), 2 (monitor failure), and 3 (overlap).
-`--json` prints manual diagnostics even on healthy runs. Do not remove a lock
-file to force concurrent collection. See [installation](references/installation.md).
-The lower-level `tick.py` remains available for a deliberate scan of all
-configured teams; it is not an additional scheduled job.
-For Hermes deployments, the [scheduler bridge](references/hermes-scheduler.md)
-combines these collectors with a durable notable-event wake gate. Its receipt
-distinguishes actual scheduled collection from job registration.
-
-## Findings and follow-up
-
-Routine phase ticks track development assignments/activity and per-sprint
-B/C/I findings without waking an agent. Invoke oversight only for a notable
-new event requiring action, such as a CI failure edge, new merge blocker, or
-idle agent with an active task. Follow the durable wake-deduplication rules in
-[notification policy](references/notification-policy.md); an unchanged failure
-or pending notification is not a reason to wake again every tick.
-
-Read [notification policy](references/notification-policy.md) when handling
-findings. Run `python scripts/cron/check_health.py --state-dir <state>` for
-deterministic findings and pending recipients. CI failure and merge conflict
-go to team-lead. Confirmed stack-rule violations and out-of-order merges go
-to the team and Rand on Telegram. Serious problems escalate to Rand.
-Healthy operation stays silent on Telegram; return status when asked.
-
-Use task events, roster/Herdr observations, git activity, CI, and stack
-diagnostics as distinct evidence. `working`, `idle`, and `done` describe
-Herdr process observations, not task or sprint completion. CI success does
-not establish QA approval or a maintained stack.
-
-When the cause needs investigation, read the
-[investigation procedure](references/investigation.md). A high QA-round count
-is a reason to inspect the dialogue, not a diagnosis or automatic restart.
-
-Before an intervention, inspect existing task reminder and lead-notification
-events and the latest relevant team response. Avoid duplicating an intervention
-already under way. A useful escalation states the affected sprint/PR/task,
-evidence and its time, current owner/blocker, and the smallest concrete next
-step. An acknowledgment is not resolution; verify the underlying condition
-on a later tick. Never infer permission to restart agents, rebase branches,
-merge PRs, or close tasks from a monitoring finding.
-
-After each confirmed send, checkpoint the actual message ID using
-`scripts/oversight/record_intervention.py --state-dir <state> --incident <key>
---recipient <route> --status sent --evidence-id <message-id>`. Use the checker's
-route label verbatim; checkpoint team and Telegram deliveries independently.
-Record `acknowledged` and `resolved` when their evidence arrives. An attempted
-or failed delivery is not `sent`. Review unresolved incidents across ticks;
-avoid repeating unchanged notifications while escalating serious unresolved
-problems to Rand.
-
-The current scripts collect and report; they do not send notifications or
-repair repositories. Use the deployment's configured ATM/Telegram delivery
-mechanism and the user's intervention policy when those are enabled. If no
-delivery mechanism is configured, return the actionable report to the caller
-and identify the delivery gap.
-
-See [operations](references/operations.md) for scheduling, recovery, and exit
-codes, and [the improvement plan](references/improvement-plan.md) for rollout.
-For a planned naming/hook rollout, use the
-[repository consistency procedure](references/repo-consistency.md). Its validator
-is `scripts/check_naming.py`; hook examples are under `assets/hooks/`.
+Persist incident identity, owner, last action, actual delivery ID and resolution
+evidence. Do not repeat unchanged alerts or infer recovery from missing data.
+Record new meaningful changes; invoke an agent only when attention is warranted.
+When Rand asks, return the table and actionable findings, not collection counts,
+test totals or claims that a process running proves oversight works.

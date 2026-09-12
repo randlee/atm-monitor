@@ -1,4 +1,0 @@
-interface:
-  display_name: "ATM Workflow Metadata"
-  short_description: "Audit and govern ATM template tags and workflow metadata"
-  default_prompt: "Use $atm-template-maintainence to audit ATM template metadata and verify workflow queries."

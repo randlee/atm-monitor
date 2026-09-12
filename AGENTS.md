@@ -1,19 +1,17 @@
 # Working in atm-monitor
 
-Authoritative skills and scripts live in `skills/`. Change masters here before
-updating a deployment. Keep local ATM configuration, database backups, and
-runtime state out of commits.
+Every change must directly support one of four outcomes: O1 phase/sprint table,
+O2 assigned-but-idle alerts, O3 CI/merge-readiness alerts, O4 self-healing.
+Read `skills/atm-oversight/references/requirements.md` and the operating
+`skills/atm-oversight/SKILL.md`. README.md maps retained files to these outcomes.
 
-For ATM template classification, tags, workflow metadata, or a blocked template
-pre-push check, read [atm-template-maintainence](skills/atm-template-maintainence/SKILL.md).
-Its maintained standard is `skills/atm-template-maintainence/references/standards.json`.
-The skill is discoverable under `.agents/skills/` for Codex and `.claude/skills/`
-for Claude; these entrypoints delegate to the same authoritative skill.
+State is immutable data only. Independent Python queries are named
+`<target>_<query>.py`, under 100 source lines excluding blanks/comments, and
+return discriminated unions of state data or actionable errors. Do not add
+implementation while the associated state/query contract is still being planned.
+Cron composes query results, persists state and decides from state changes.
 
-For oversight behavior, read `skills/atm-oversight/SKILL.md`; for adding phase
-settings, read `skills/oversight-onboarding/SKILL.md`. Treat capability boundaries
-as real: a written lifecycle or cron procedure is not implemented automation.
-Repository template files are authoritative. Daemon repository-access fixes
-are outside this repository's oversight work.
-
-Run the relevant unittest suites listed in `.github/workflows/tests.yml`.
+Masters live in skills/. Test before distributing verified bundles. Keep local
+ATM config, credentials, state and archives out of commits. Do not alter the ATM
+database, maintained repositories or system permissions to repair monitoring.
+Run the applicable suites in .github/workflows/tests.yml. Never bypass hooks.
