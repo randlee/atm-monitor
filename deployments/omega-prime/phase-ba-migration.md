@@ -108,7 +108,8 @@ Both installed inventories match their receipts; installed tests passed
 The config now explicitly uses actor `omega-prime`; both existing phase starts
 and their evidence are preserved. Previous bundles and config were archived.
 The two-pass installed collection/report retest was requested in
-`01M29M65GBDXNJ2TYRMCKJBMV9`; its result is pending. Scheduling and incident
+`01M29M65GBDXNJ2TYRMCKJBMV9`; Omega-prime completed it in
+`01M29N5E1FSXE2JSXSKMRMJQCG` after the 1.5.15 switch. Scheduling and incident
 delivery remain disabled. Fenix received the development fixture summary and
 accepted-contract interpretation in `01M29M4KCHWZF2VPBVPRPC7PKX`.
 
@@ -134,6 +135,13 @@ unaccepted. No root cause is inferred from the generic reader error. Fenix
 received the reproduction/evidence report in `01M29N5D29QBE99KENXAKFDCAK`;
 Omega-prime received the remaining-failure guidance in
 `01M29N5D2VJWSD60G9CPSCNM2E`. Raw doctor output, snapshots, summary, and direct
-reproducers are retained under `.local/validation/host-1.5.15/`. This independent
-installed-script check does not replace Omega-prime's pending deployment-state
-retest. No host daemon or database was modified.
+reproducers are retained under `.local/validation/host-1.5.15/`. Omega-prime's deployment-state retest also completed, as recorded below. No host daemon or database was modified.
+
+Omega-prime's receipt `01M29N5E1FSXE2JSXSKMRMJQCG` independently reproduced
+177 sources, the same two failures, zero partial sources and zero deferrals.
+Inspection of deployed snapshots 11 and 12 confirms **158 tasks, 156 readable
+histories, and 158 persisted known IDs**; these supersede the receipt's stale
+155/157 counts. The receipt's suggestion of corrupted data is unconfirmed;
+root cause remains pending Fenix analysis. The deployed snapshot records no
+intervention deliveries. Query migration is verified with explicit remaining
+event coverage failures; BA.4 host-switch verification remains the next step.
