@@ -18,7 +18,8 @@ KINDS = ('herdr', 'doctor', 'roster', 'tasks', 'task-events', 'git', 'ci', 'stac
 ATM_KINDS = {'doctor', 'roster', 'tasks', 'task-events'}
 
 
-def command_for(kind, team=None, task_id=None, limit=None, branch='HEAD', since=None, actor=None):
+def command_for(kind, team=None, task_id=None, limit=None, branch='HEAD', since=None, actor=None,
+                task_surface='task'):
     if kind == 'herdr':
         return ['herdr', 'agent', 'list']
     if kind in ATM_KINDS and (not team or not actor):
@@ -28,10 +29,16 @@ def command_for(kind, team=None, task_id=None, limit=None, branch='HEAD', since=
     if kind == 'roster':
         return ['atm', 'members', '--team', team, '--json']
     if kind == 'tasks':
+        if task_surface == 'list':
+            # BA.2's task-ledger path returns all states; --all is a mailbox
+            # selector and is explicitly incompatible with --tasks there.
+            return ['atm', 'list', '--team', team, '--as', actor, '--tasks', '--json']
         return ['atm', 'task', 'list', '--team', team, '--as', actor, '--all', '--json']
     if kind == 'task-events':
         if not task_id:
             raise ValueError('task_id is required')
+        if task_surface == 'list':
+            return ['atm', 'list', '--team', team, '--as', actor, '--task-events', task_id, '--json']
         return ['atm', 'task', 'events', task_id, '--team', team, '--as', actor, '--json']
     if kind == 'stack':
         return ['gh', 'stack', 'view', '--json']
@@ -143,19 +150,21 @@ class SourceError(Exception):
         self.error = error
 
 
-def require_task_api(context):
-    """Gate on the daemon's HTTP contract, never on the CLI release number."""
+def task_query_surface(context):
+    """Select the BA query form from the daemon HTTP API, not release version."""
     version = context.get('http_api_version') if isinstance(context, dict) else None
     match = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)(?:[-+][0-9A-Za-z.+-]+)?', version) if isinstance(version, str) else None
     if not match:
         raise SourceError({'code': 'unknown-task-api', 'detail': 'doctor did not establish the daemon HTTP API version'})
     major, minor, patch = map(int, match.groups())
     if major == 1 and minor >= 6:
-        return
+        return 'task'
+    if major == 1 and minor == 5:
+        return 'list'
     code = 'pre-ba-task-api' if (major, minor, patch) < (1, 5, 0) else 'unsupported-task-api'
     raise SourceError({'code': code, 'http_api_version': version,
-                       'detail': 'task collection requires the Phase BA.4 HTTP API 1.6.x+ contract within major 1; '
-                                 'no legacy task flags or direct database fallback are used'})
+                       'detail': 'task collection requires a compatible Phase BA HTTP API (major 1, >=1.5.0); '
+                                 'no query is attempted against a pre-BA or unknown-major daemon'})
 
 
 def collect(kind, *, repo=None, team=None, task_id=None, limit=None, branch='HEAD',
@@ -194,13 +203,15 @@ def collect(kind, *, repo=None, team=None, task_id=None, limit=None, branch='HEA
         if kind == 'ci':
             result.update(data=collect_prs(execute, limit or 100, start_time), status='ok')
             return result
+        task_surface = 'task'
         if kind in {'tasks', 'task-events'}:
             if daemon_context is None:
                 doctor = decode('doctor', execute(command_for('doctor', team=team, actor=actor)), team)
                 daemon_context = doctor['daemon_context']
             result['daemon_context'] = daemon_context
-            require_task_api(daemon_context)
-        cmd = command_for(kind, team, task_id, limit, branch, since, actor)
+            task_surface = task_query_surface(daemon_context)
+            result['task_query_surface'] = task_surface
+        cmd = command_for(kind, team, task_id, limit, branch, since, actor, task_surface)
         p = run(cmd, cwd=repo, capture_output=True, text=True, encoding='utf-8',
                 errors='replace', timeout=timeout, env=env)
         if p.returncode:
@@ -217,6 +228,21 @@ def collect(kind, *, repo=None, team=None, task_id=None, limit=None, branch='HEA
             if kind == 'task-events' and any(row['task_id'] != task_id for row in result['data']):
                 raise ValueError('event response includes a different task')
             result['status'] = 'ok'
+            if kind == 'tasks' and task_surface == 'task':
+                # Current BA.4 --all means all members, not all task states.
+                # The CLI also uses TaskPage::default_bounded() (200 rows).
+                # Preserve actual observations without claiming full history.
+                result['status'] = 'partial'
+                result['coverage'] = {'task_states': 'open-only', 'row_limit': 200,
+                                      'limit_reached': len(result['data']) >= 200}
+                result['error'] = {'code': 'task-history-not-exposed',
+                                   'detail': 'BA.4 task list --all excludes completed tasks and returns at most '
+                                             '200 rows; full-history CLI support is required for complete coverage'}
+            elif kind == 'task-events' and task_surface == 'task' and len(result['data']) >= 200:
+                result['status'] = 'partial'
+                result['coverage'] = {'row_limit': 200, 'limit_reached': True}
+                result['error'] = {'code': 'limit-reached',
+                                   'detail': 'BA.4 task events returned its 200-row bound; later events may be omitted'}
             if kind == 'git' and limit is not None and len(result['data']) >= limit:
                 result['status'] = 'partial'
                 result['error'] = {'code': 'limit-reached', 'detail': 'additional results may exist'}

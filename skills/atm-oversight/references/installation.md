@@ -77,11 +77,25 @@ have different meanings. No sender is installed by these scripts.
    selector. Standalone ATM collectors and message mining require `--as` too.
    Each phase tick records `atm doctor --json` and gates on
    `daemon_context.http_api_version`, not the release number. Task collection
-   uses BA.4's `atm task list --all --json` and `atm task events ID --json`
-   for HTTP API major 1, version 1.6.0 or later. Pre-BA, unknown, future-major,
-   and transitional 1.5.x task APIs remain explicitly unavailable; no legacy
-   task-flag or direct-database fallback is attempted. Mail, members, doctor,
+   uses BA.2's `atm list --tasks --json` / `atm list --task-events ID --json`
+   for HTTP API 1.5.x, and BA.4's `atm task list --all --json` /
+   `atm task events ID --json` for major 1 at version 1.6.0 or later.
+   BA.2 task queries already return every state; its `--all` flag is a
+   conflicting mailbox selector and must not be supplied. Pre-BA, unknown,
+   and future-major task APIs remain explicitly unavailable. A failed query
+   is not retried using another schema/command family. Mail, members, doctor,
    and repository observations can still be collected during this transition.
+   Retain the daemon release and HTTP API with observations. Validate the
+   current development builds before deployment, then have omega-prime retest
+   the installed bundle against each newly switched patch build. A published
+   release is not a prerequisite for query validation or migration.
+   Current BA.4 `--all` is an all-members open queue, not historical listing;
+   list and events default to 200 rows. The adapter marks the task inventory
+   partial, retains observed task IDs across outages, and keeps querying their
+   events after closure. Event responses reaching 200 rows remain partial.
+   Tasks created and closed between polls are an explicit discovery gap.
+   Full-state listing and pagination are tracked in atm-core #1411; no release
+   boundary for that capability is assumed.
 4. Select separate activity and phase state directories, such as
    `<state>/activity` and `<state>/phases`. Use stable paths throughout the
    pilot. Temporary storage is acceptable initially; losing it loses history.

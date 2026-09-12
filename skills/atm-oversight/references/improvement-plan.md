@@ -101,9 +101,11 @@ live acceptance is on Fenix's host-switch checklist) and separate
 schema/outage error classification in
 [atm-core #1410](https://github.com/randlee/atm-core/issues/1410).
 Keep affected histories unavailable until full retests pass. The updated
-adapter targets BA.4's `atm task list` / `atm task events`; validate it live
-once the matching HTTP API 1.6.x+ pair is deployed. Transitional 1.5.x remains
-unavailable in this adapter instead of falling back to obsolete CLI flags.
+adapter selects BA.2's `atm list --tasks` / `--task-events` for HTTP API 1.5.x
+and BA.4's `atm task list --all` / `atm task events` for 1.6.x+ within major 1.
+Verify queries against development builds now, and retest each deployed patch
+with omega-prime. Preserve the exact release/API/source evidence across the
+migration so the 1.6 release is supported by accumulated dogfooding results.
 
 | Priority | Improvement | Completion evidence |
 |---|---|---|

@@ -33,10 +33,23 @@ Fenix's guidance `01M29JDFFCSTB9RVVXXP4H5T4Z` makes the final Phase BA contract
 the implementation target. The monitor now collects doctor metadata and gates
 tasks on `daemon_context.http_api_version`, requires a configured query actor,
 and uses `atm task list --all --json` / `atm task events ID --json` for API
-major 1 at version 1.6.0 or later. API 1.5.x is a recognized but unsupported
-transition in this adapter; task rows remain unavailable until BA.4 is usable.
+major 1 at version 1.6.0 or later. The initial adapter omitted API 1.5.x;
+Rand corrected this gap. It now selects BA.2's `atm list --tasks --json` and
+`atm list --task-events ID --json` for API 1.5.x. Those commands include
+complete rows without the incompatible mailbox `--all` selector.
 Unknown versions and future major versions also remain unavailable.
-No direct database or legacy task-flag fallback is part of the runtime.
+There is no direct database access or retry into another query family after
+an error; both query forms are selected from an observed compatible contract.
+
+Source inspection of BA.4 `5ab184d75` corrected another assumption: `--all`
+selects all members, but `select_task_rows` still excludes complete tasks, and
+both task queries use a default 200-row bound. Fenix confirmed this is the
+queue-view contract, not a BA.4 defect, and filed full-state listing/pagination
+as [atm-core #1411](https://github.com/randlee/atm-core/issues/1411). The monitor
+retains returned data with explicit partial coverage, persists known task IDs
+across ticks/outages, and queries those IDs after closure. It does not claim to
+discover tasks that start and finish between polls. See
+[the migration record](phase-ba-migration.md) for validation and rollout tracking.
 
 A live check at September 12, 01:11 UTC observed release 1.5.14 with HTTP API
 1.3.0. Task collection returned `pre-ba-task-api` before any ledger query;

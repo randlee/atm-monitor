@@ -99,6 +99,23 @@ def run_tick(config, state_dir, collector=collect):
         changed = {team['name'] for team in config['teams']
                    if any(team.get(field) != old_teams.get(team['name'], {}).get(field)
                           for field in ('repo', 'projects', 'actor'))}
+        known_tasks = {}
+        for team in config['teams']:
+            name = team['name']
+            identity_changed = any(team.get(field) != old_teams.get(name, {}).get(field)
+                                   for field in ('repo', 'actor'))
+            ids = set() if identity_changed else set((previous or {}).get('known_task_ids', {}).get(name, []))
+            if not identity_changed:
+                # Upgrade earlier snapshots without losing IDs whose first
+                # event read failed. No task bodies or state are inferred.
+                for collection in ('sources', 'last_good'):
+                    for key, source in (previous or {}).get(collection, {}).items():
+                        prefix = name + '/task-events/'
+                        if key.startswith(prefix):
+                            ids.add(key[len(prefix):])
+                        elif key == name + '/tasks' and source.get('status') in {'ok', 'partial'}:
+                            ids.update(row['task_id'] for row in source.get('data') or [])
+            known_tasks[name] = ids
         specifications = jobs(config)
         with ThreadPoolExecutor(max_workers=4) as pool:
             futures = [(key, pool.submit(collector, kind, **options))
@@ -134,12 +151,13 @@ def run_tick(config, state_dir, collector=collect):
             pending = []
             for team in config['teams']:
                 task_source = sources[team['name'] + '/tasks']
-                if task_source['status'] != 'ok':
+                if task_source['status'] not in {'ok', 'partial'}:
                     continue
-                grouped = {}
-                for row in task_source['data']:
-                    grouped.setdefault(row['task_id'], []).append(row)
-                for task_id in grouped:
+                ids = known_tasks[team['name']]
+                ids.update(row['task_id'] for row in task_source['data'])
+                # Keep observing known tasks after they leave the open queue.
+                # Unknown tasks that close between polls remain a coverage gap.
+                for task_id in sorted(ids):
                     key = team['name'] + '/task-events/' + task_id
                     pending.append((key, team, task_id))
             # Task state can stay unchanged while new events arrive. Fetch every
@@ -195,6 +213,7 @@ def run_tick(config, state_dir, collector=collect):
                     'interventions': previous.get('interventions', {}) if previous else {},
                     'intervention_history': previous.get('intervention_history', []) if previous else [],
                     'deferred_event_tasks': 0,
+                    'known_task_ids': {name: sorted(ids) for name, ids in known_tasks.items()},
                     'unscoped_projects': [team['name'] for team in config['teams'] if not team.get('projects')],
                     'onboarding_requests': onboarding,
                     'teams': config['teams']}
