@@ -90,8 +90,9 @@ the phase and repository, joined to its unique PR identity and terminal closed
 outcome. Record the full head SHA, PR URL/number, source branch,
 phase/repository association, and source timestamps. A closed but unmerged PR
 does not automatically close the phase. Omega-prime investigates the PR,
-linked replacement work, and relevant evidence, or uses Rand's explanation to
-determine whether the phase was abandoned, superseded, or continues elsewhere.
+linked replacement work, and relevant evidence, then escalates the findings
+and proposed disposition to Rand. Incorporate Rand's explanation when supplied
+to establish abandonment, supersession, or continuing work.
 Until resolved, retain the prior phase state and repo monitoring. Record the PR
 closure observation separately from the resulting phase decision, with evidence
 and decision time; do not assume the PR close time is the abandonment time.

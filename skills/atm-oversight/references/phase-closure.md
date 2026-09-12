@@ -23,8 +23,10 @@ branch, repository and phase, unique PR number/URL, full head SHA, and the PR's
 terminal closed timestamp and outcome. A merged phase integration PR supplies
 integration completion evidence. A closed, unmerged PR instead requires
 Omega-prime to investigate its discussion, linked replacements, and relevant
-work evidence, or use Rand's explanation. Determine whether the phase was
-abandoned, superseded, or is continuing. It is not automatic phase closure.
+work evidence. Then escalate the findings and proposed disposition to Rand,
+including PR/replacement links and any missing evidence. Use Rand's explanation
+when supplied to establish whether the phase was abandoned, superseded, or is
+continuing. Do not silently decide abandonment from an unmerged PR closure.
 While unresolved, retain the prior phase state and continue repo monitoring.
 Record the PR closure observation separately from the phase decision; an
 unknown abandonment time stays unknown rather than borrowing the PR timestamp.
