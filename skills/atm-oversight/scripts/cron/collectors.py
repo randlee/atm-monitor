@@ -19,7 +19,7 @@ ATM_KINDS = {'doctor', 'roster', 'tasks', 'task-events'}
 
 
 def command_for(kind, team=None, task_id=None, limit=None, branch='HEAD', since=None, actor=None,
-                task_surface='task'):
+                task_surface='task', all_task_events=False):
     if kind == 'herdr':
         return ['herdr', 'agent', 'list']
     if kind in ATM_KINDS and (not team or not actor):
@@ -39,7 +39,8 @@ def command_for(kind, team=None, task_id=None, limit=None, branch='HEAD', since=
             raise ValueError('task_id is required')
         if task_surface == 'list':
             return ['atm', 'list', '--team', team, '--as', actor, '--task-events', task_id, '--json']
-        return ['atm', 'task', 'events', task_id, '--team', team, '--as', actor, '--json']
+        return ['atm', 'task', 'events', task_id, '--team', team, '--as', actor,
+                *(['--all'] if all_task_events else []), '--json']
     if kind == 'stack':
         return ['gh', 'stack', 'view', '--json']
     if kind == 'worktrees':
@@ -214,6 +215,7 @@ def collect(kind, *, repo=None, team=None, task_id=None, limit=None, branch='HEA
             result.update(data=collect_prs(execute, limit or 100, start_time), status='ok')
             return result
         task_surface = 'task'
+        all_task_events = False
         if kind in {'tasks', 'task-events'}:
             if daemon_context is None:
                 doctor = decode('doctor', execute(command_for('doctor', team=team, actor=actor)), team)
@@ -221,7 +223,12 @@ def collect(kind, *, repo=None, team=None, task_id=None, limit=None, branch='HEA
             result['daemon_context'] = daemon_context
             task_surface = task_query_surface(daemon_context)
             result['task_query_surface'] = task_surface
-        cmd = command_for(kind, team, task_id, limit, branch, since, actor, task_surface)
+            # API 1.6 development builds straddle the addition of --all.
+            # API 1.7+ is the verified complete-history contract; preserve the
+            # legacy command on earlier builds rather than pass unknown flags.
+            api_minor = int(daemon_context['http_api_version'].split('.')[1])
+            all_task_events = task_surface == 'task' and api_minor >= 7
+        cmd = command_for(kind, team, task_id, limit, branch, since, actor, task_surface, all_task_events)
         p = run(cmd, cwd=repo, capture_output=True, text=True, encoding='utf-8',
                 errors='replace', timeout=timeout, env=env)
         if p.returncode:
@@ -246,6 +253,9 @@ def collect(kind, *, repo=None, team=None, task_id=None, limit=None, branch='HEA
                     result['status'] = 'partial'
                     result['error'] = {'code': 'limit-reached',
                                        'detail': 'task queue returned its 200-row bound; additional queued tasks may exist'}
+            elif kind == 'task-events' and all_task_events:
+                result['coverage'] = {'scope': 'task-event-history', 'selection': 'all',
+                                      'row_limit': None, 'limit_reached': False}
             elif kind == 'task-events' and task_surface == 'task' and len(result['data']) >= 200:
                 result['status'] = 'partial'
                 result['coverage'] = {'row_limit': 200, 'limit_reached': True}

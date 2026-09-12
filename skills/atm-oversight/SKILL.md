@@ -17,6 +17,12 @@ Read the deployment's rollout instructions before enabling schedules or sends.
 
 ## Your responsibility: discover and follow the work
 
+On startup and each actionable wake, compare live behavior against
+[operating expectations](references/operating-expectations.md). Investigate and
+escalate deviations to the maintainer without waiting for Rand to ask. Current
+continuous-monitoring authorization supersedes historical Stage 1 manual-only
+instructions; use actual scheduled receipts to verify operation.
+
 Act from this skill and the evidence without requiring Rand to direct each
 monitoring step. Excessive, duplicate, or unjustified agent triggers are
 monitoring defects: escalate to `amon@atm-monitor` with wake/event identities,

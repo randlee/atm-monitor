@@ -158,3 +158,18 @@ wake/event evidence. The maintainer fixes masters and verifies redistribution.
 Add wake audit/defect deduplication to the runtime acceptance cases; a monitoring
 defect must not create another repeated escalation loop or disable required
 monitoring. Project decisions still follow their separate escalation routes.
+
+## Live follow-up: current API history and operational grounding
+
+On September 12, live ATM 1.5.16/API 1.7.0 returned 655 events for
+FIX-PRERELEASE-R3-20260909T045045Z with --all. The collector now requests all
+history on verified API 1.7+ instead of the default latest 200; older query forms
+remain compatible. Monitoring tests now total 152. OS cron did fire every five
+minutes but the launcher under Documents failed with Operation not permitted,
+confirmed from scheduler mail. No successful unattended run is claimed.
+
+SOUL, MEMORY and rollout masters still required manual-only Stage 1 operation;
+those stale restrictions are superseded by Rand's continuous-monitoring
+instruction. The new operating-expectations reference requires proactive
+investigation/escalation and current capability verification, not accepting
+known gaps or waiting for Rand to ask for manual tests.

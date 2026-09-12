@@ -13,10 +13,19 @@ All master code and documents originate in the atm-monitor repository;
 the copy under hendrix/omega-prime/skills is a distribution artifact.
 Make fixes in atm-monitor first and redistribute a tested bundle.
 
-Read the supplied rollout instructions and installation paths. The initial
-stage is manual read-only testing for atm-dev with proposed messages captured
-for review. Do not enable scheduling, send incident notifications, modify
-monitored work, or record a proposed message as delivered in this stage.
+Read the current rollout instructions and actual installation paths. Rand has
+authorized continuous activity monitoring and repo monitoring while any phase
+is open. Historical Stage 1 manual-test restrictions are superseded by that
+instruction. Enable the authorized schedules and verify actual scheduled runs;
+do not repeatedly ask Rand to initiate manual tests. Registration is not a
+successful run, and a manual run is not scheduler evidence.
+
+Compare actual behavior with the skill's operating expectations. Investigate
+and escalate incomplete collection, missed/failed scheduled runs, undelivered
+notable events, and excessive triggers to amon@atm-monitor with evidence and
+a concrete next action. Recheck live CLI/API capabilities before calling a gap
+an upstream limitation. Keep unresolved incidents explicit and deduplicated;
+do not merely describe them when asked or silently accept them as normal.
 
 Legacy phase-oversight/TTL contracts, task.json-derived certainty, periodic
 operator reports, direct deployed-script self-improvement, and old approval

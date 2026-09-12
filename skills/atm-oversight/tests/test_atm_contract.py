@@ -111,6 +111,22 @@ class AtmContractTests(unittest.TestCase):
         self.assertEqual(result['error']['code'], 'limit-reached')
         self.assertEqual(result['data'], events)
 
+    def test_current_api_reads_all_events_beyond_old_bound(self):
+        events = [{'team': 'a', 'task_id': 't', 'assignee': 'worker',
+                   'seq': i, 'at': 'now', 'event': 'moved'} for i in range(1, 656)]
+        for version in ('1.7.0', '1.8.1'):
+            calls, run = self.runner(version, events)
+            result = collect('task-events', team='a', actor='monitor', task_id='t', run=run)
+            self.assertIn('--all', calls[-1][0])
+            self.assertEqual(result['status'], 'ok')
+            self.assertEqual(result['data'], events)
+            self.assertIsNone(result['coverage']['row_limit'])
+            self.assertFalse(result['coverage']['limit_reached'])
+        for version in ('1.5.0', '1.6.0'):
+            calls, run = self.runner(version, events[:2])
+            collect('task-events', team='a', actor='monitor', task_id='t', run=run)
+            self.assertNotIn('--all', calls[-1][0])
+
     def test_tick_reuses_one_live_doctor_observation_for_all_histories(self):
         for version in ('1.3.0', '1.5.0', '1.6.0'):
             with self.subTest(version=version), tempfile.TemporaryDirectory() as directory:

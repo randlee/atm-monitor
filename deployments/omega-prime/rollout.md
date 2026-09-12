@@ -14,14 +14,31 @@ atm-monitor before distributing an upgrade.
 | 3 — supervised delivery | Wake oversight and exercise approved team/operator routes | Actual receipt IDs, independent recipients, retry/deduplication, healthy silence, and acknowledgment versus resolution verified |
 | 4 — continuous operation | Unattended monitoring for the pilot team, then another team | Follow-up deadlines and serious-problem escalation work without manual recovery; discovery gaps have explicit treatment |
 
-Current deployment intent: stage 1. Do not start stages 2–4 as a side effect of
-receiving the test instructions. Advance only after the previous stage's
-evidence has been reviewed with Rand. This staged validation is the requested
-rollout process, not a general restriction on reading evidence or fixing bugs.
+## Current operating instruction — September 12, 2026
 
-The [stage-1 acceptance record](stage-1-acceptance.md) confirms the manual
-functional smoke test and lists its remaining coverage limits. Scheduled
-capture is the next stage; acceptance itself does not enable scheduling.
+Rand has authorized continuous activity monitoring and a repo-specific cron
+while any phase remains open. The stages above record rollout history, not a
+requirement to ask Rand for another manual test or repeated schedule approval.
+Enable/reuse authorized jobs, verify actual scheduled execution, and escalate
+failures to amon@atm-monitor. A manual test is useful only to isolate a fault;
+it does not replace continuous operation or prove the scheduler works.
+
+Expected operation: full available task history, current source coverage,
+qualified activity handoff, suppression for already-owned repos, routine
+assignment/B/C/I tracking, notable-event-only agent wakes, and immediate phase
+reports. Distinguish code that exists from these required but unfinished
+integrations. Escalate gaps with evidence; never explain them away as normal.
+
+The September 12 cron diagnosis found OS cron firing but the Documents-hosted
+launcher rejected with `Operation not permitted`. This is a scheduler execution
+failure, not lack of cron firing. Empty success logs prove nothing; use run
+receipts, snapshot timestamps, exit status, and scheduler failure records.
+Current task history on ATM 1.5.16/API 1.7.0 supports `atm task events ID --all`;
+the default recent-200 selection is not complete history.
+
+The [stage-1 acceptance record](stage-1-acceptance.md) is historical evidence.
+The following manual procedure remains a diagnostic reference, not the current
+operating-mode restriction.
 
 ## Stage 1 test procedure
 
@@ -56,7 +73,8 @@ been retired. Preserve missing evidence as unknown.
 
 Report test results to Rand or reply to the originating ATM testing request.
 Do not rebase/merge branches, modify monitored repositories/tasks, install
-hooks, enable schedules, or send incident notifications during this stage.
+hooks or send test incident notifications during this historical Stage 1
+procedure. Current authorized scheduling follows the operating instruction above.
 The selected team's source repository remains read-only.
 
 ## Later-stage constraints
