@@ -134,6 +134,9 @@ are 0 (silent success), 1 (attention), 2 (monitor failure), and 3 (overlap).
 file to force concurrent collection. See [installation](references/installation.md).
 The lower-level `tick.py` remains available for a deliberate scan of all
 configured teams; it is not an additional scheduled job.
+For Hermes deployments, the [scheduler bridge](references/hermes-scheduler.md)
+combines these collectors with a durable notable-event wake gate. Its receipt
+distinguishes actual scheduled collection from job registration.
 
 ## Findings and follow-up
 

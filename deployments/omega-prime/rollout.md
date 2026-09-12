@@ -36,6 +36,16 @@ receipts, snapshot timestamps, exit status, and scheduler failure records.
 Current task history on ATM 1.5.16/API 1.7.0 supports `atm task events ID --all`;
 the default recent-200 selection is not complete history.
 
+The replacement execution path is the existing omega-prime Hermes gateway
+scheduler, using a profile-local launcher for the installed
+`scripts/cron/hermes_monitor.py`. Its five-minute job collects configured work
+and uses a durable incident gate before agent startup. A scheduled read probe
+on September 12 at 13:21 PDT confirmed that this execution context can read the
+Documents-hosted skill and config. Actual collection receipts live under
+`state/scheduler/last_run.json`; consult those and Hermes execution records before
+claiming success. The job does not complete the outstanding qualified-discovery,
+repo-ownership, and phase-closure integrations.
+
 The [stage-1 acceptance record](stage-1-acceptance.md) is historical evidence.
 The following manual procedure remains a diagnostic reference, not the current
 operating-mode restriction.

@@ -4,8 +4,9 @@ Reviewed the three master skills, their references and Python helpers/tests,
 repository hooks, deployment/distribution tooling, and the lifecycle requirements.
 Two Luna passes independently reviewed runtime behavior and lifecycle coverage;
 a follow-up traced both agent discovery routes and reviewed the metadata fixes.
-This review did not change production crons, close any live phase, or write the
-live ATM database. Repository-access problems in the daemon are out of scope.
+The initial review did not change production crons, close any live phase, or
+write the live ATM database. The scheduler follow-up below changes monitoring
+execution. Repository-access problems in the daemon are out of scope.
 
 ## Main conclusion
 
@@ -173,3 +174,20 @@ those stale restrictions are superseded by Rand's continuous-monitoring
 instruction. The new operating-expectations reference requires proactive
 investigation/escalation and current capability verification, not accepting
 known gaps or waiting for Rand to ask for manual tests.
+
+
+## Hermes scheduler follow-up
+
+A scheduled no-agent read probe succeeded from the existing Hermes gateway
+(pid 808) at 13:21 PDT, reading both the installed skill and monitor config in
+Documents. The configured-work job now uses `hermes_monitor.py` and
+`agent_gate.py`: routine ticks remain silent, new pending incidents wake once,
+collection failures route to amon, and recovery requires clean coverage before
+recurrence can wake again. All findings retain incident activity even when
+notification delivery is already recorded. Eight gate tests, two orchestration
+tests, and the full 162-test oversight suite pass; distribution's nine tests pass.
+
+This is a configured-work scheduler bridge, not automatic phase discovery or
+closure. Wake reservation precedes agent startup and does not prove delivery;
+scheduler startup failures need explicit reconciliation before retry. Live
+collection evidence and scheduler IDs belong in the private deployment receipt.
