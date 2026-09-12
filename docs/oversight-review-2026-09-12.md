@@ -139,3 +139,13 @@ durable wake handoff checkpoint, distinct from delivery state. Acceptance must
 cover CI fail edges, unchanged failure silence, recovery/recurrence, new merge
 blocks, fresh idle-with-active-task evidence, and no wake for ordinary idle or
 routine counts. Existing incident helpers do not complete this wake integration.
+
+## Follow-up requirement: immediate complete phase report
+
+Rand must be able to obtain the whole phase and every sprint's status on demand
+from recorded state, without waiting for a tick. Include planned/unstarted and
+closed sprints from the plan inventory even without PRs, assignments/activity,
+DEV/QA/CI and B/C/I, blockers, phase milestones, evidence and as-of/coverage.
+The current renderer is not a full phase projection. Acceptance must cover
+requesting a report during collection/outage, unstarted sprints, overlapping
+phases, and historical reports after closure and snapshot pruning.

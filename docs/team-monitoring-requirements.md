@@ -100,3 +100,22 @@ Query the ATM daemon for specific task state by task ID or by state.
 
 The deployed skill's notification policy defines this gate. Full runtime wake
 integration and idle-with-active-task detection are outstanding implementation.
+
+## Immediate whole-phase reporting (Rand, September 12)
+
+At any time, Rand can request a report of the entire phase and every sprint.
+Return the latest recorded state without waiting for a cron tick or requiring
+full live recollection. Identify the phase, lifecycle, planning/hardening
+milestones, and completion/disposition evidence. For every sprint in the phase
+plan show status, owner and current assignments, development/QA/CI state,
+B/C/I finding counts, blockers, latest activity, and evidence references.
+
+The plan supplies the sprint inventory, including future/unstarted sprints and
+sprints without PR/task evidence. Retain completed/abandoned/superseded history.
+Each report states its as-of time and source freshness/coverage; unavailable
+facts remain unknown. Counts must not double-count recurring review findings.
+An explicit report request is independent of the cron notable-event wake gate.
+
+The current report.py renders discovered sprint evidence, not this complete
+phase projection. Full planned-sprint inventory, lifecycle/metrics/findings
+projection, and retained closed-phase reports remain implementation work.

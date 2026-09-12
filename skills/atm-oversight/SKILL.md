@@ -73,6 +73,21 @@ and report `unscoped_projects`; they require onboarding before continuous use.
 
 ## Reporting
 
+Rand can request a complete phase report at any time. Read the latest recorded
+state immediately; do not wait for the next cron tick or require a new full
+collection. Cover every sprint in the phase plan, including not-started,
+active, and closed sprints without PRs or tasks. Show phase lifecycle and
+planning/hardening milestones; for each sprint show status, owner/assignment,
+DEV/QA/CI, B/C/I findings, blockers, and latest activity. Include evidence links,
+as-of time, and stale/unknown coverage. Missing evidence is not success, zero
+findings, or grounds to omit a sprint. Keep closed phase reports available.
+
+The current sprint renderer is an input to this report, not yet the complete
+phase projection or authoritative inventory of all planned sprints. Use the
+phase plan and recorded evidence to fill coverage explicitly until that report
+integration is implemented. An explicit report request authorizes responding
+without a notable-event trigger; routine cron ticks remain silent.
+
 Read the phase event log for planning/lifecycle status and hardening metrics.
 The current report script supplies sprint/branch tables, not those metrics.
 Run `python scripts/oversight/report.py --state-dir <state> --team <team>`
