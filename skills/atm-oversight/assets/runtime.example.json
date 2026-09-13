@@ -92,7 +92,24 @@
       },
       "preferred_stack_contexts": [
         "/absolute/path/to/existing/stack-member-worktree"
-      ]
+      ],
+      "aliases": {
+        "BB.1": [
+          "feature/bb-collapsed"
+        ],
+        "BB.2": [
+          "feature/bb-collapsed"
+        ],
+        "BB.3": [
+          "feature/bb-collapsed"
+        ],
+        "BB.4": [
+          "feature/bb-collapsed"
+        ],
+        "BB.5": [
+          "feature/bb-collapsed"
+        ]
+      }
     }
   ],
   "scheduler": {

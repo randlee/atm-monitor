@@ -27,9 +27,10 @@ def bind_tasks(repo, sprints, tasks, workflow, prs):
         identity = scope(repo, event.sprint)
         if event.task_id and identity in known:
             by_task.setdefault(event.task_id, set()).add(identity)
-    by_branch = {s.branch: s.sprint for s in sprints}
+    by_branch = {s.branch: {s.sprint} for s in sprints}
     for sprint, branches in aliases(repo, prs):
-        by_branch.update({b: sprint for b in branches})
+        for branch in branches:
+            by_branch.setdefault(branch, set()).add(sprint)
     by_pr = {p.number: by_branch[p.head] for p in prs if p.head in by_branch}
     bound = []
     provisional = []
@@ -38,7 +39,8 @@ def bind_tasks(repo, sprints, tasks, workflow, prs):
         if task.sprint in known:
             candidates = {task.sprint}
         if not candidates:
-            candidates = {by_pr[int(n)] for n in re.findall(r'(?:PR\s*)?#(\d+)', task.description or '') if int(n) in by_pr}
+            candidates = {s for n in re.findall(r'(?:PR\s*)?#(\d+)', task.description or '')
+                          for s in by_pr.get(int(n), ())}
         sprint = next(iter(candidates)) if len(candidates) == 1 else 'unscoped:' + task.task_id
         bound.append(replace(task, sprint=sprint))
         if sprint.startswith('unscoped:'):

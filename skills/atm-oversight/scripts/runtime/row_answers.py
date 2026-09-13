@@ -20,7 +20,7 @@ def answer(sprints, tasks, prs, reports=(), conditions=(), stale_sources=(), ali
         branches = {sprint.branch, *branch_aliases.get(sprint.sprint, ())}
         related = [p for p in prs if p.head in branches]
         active = [p for p in related if p.state == 'OPEN']
-        current = active or related
+        current = active or [p for p in related if p.state == 'MERGED'] or related
         task_ids = tuple(t.task_id for t in assigned)
         owner = fact([t.assignee for t in assigned], task_ids, 'atm_tasks' in stale_sources)
         task_fact = fact([t.task_id + ':' + t.status for t in assigned], task_ids, 'atm_tasks' in stale_sources)
@@ -30,7 +30,7 @@ def answer(sprints, tasks, prs, reports=(), conditions=(), stale_sources=(), ali
                        tuple(p.node_id for p in current), support='PR evidence')
         if not assigned and not related:
             dev = Fact('planned; execution unknown', 'plan', evidence=(sprint.sprint,))
-        qa, rounds, counts = reviews(report_map.get(sprint.sprint, ()), {p.head_sha for p in current})
+        qa, rounds, counts = reviews(report_map.get(sprint.sprint, ()), {p.head_sha for p in active})
         pr_evidence = tuple(p.node_id + '@' + p.head_sha for p in current)
         pr_fact = fact([f'#{p.number} {p.state}' for p in current], pr_evidence, 'gh_checks' in stale_sources)
         ci = fact([f'#{p.number}: {p.rollup_state or "unknown"}; merge {p.merge_state or "unknown"}'

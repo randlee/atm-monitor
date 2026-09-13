@@ -20,7 +20,7 @@ def reviews(reports, heads):
             current[matches[0]] = report
     historical = False
     if not current and unique:
-        latest = max(unique.values(), key=round_order)
+        latest = max(unique.values(), key=lambda r: r.report_id)
         current = {latest.revision: latest}
         historical = True
     if not current:
@@ -38,13 +38,15 @@ def reviews(reports, heads):
     names = {'B': 'blocking', 'C': 'critical', 'I': 'important'}
     for code, name in names.items():
         totals = [dict(r.aggregate).get(name, dict(r.aggregate).get(code)) for r in chosen]
-        if all(v is not None for v in totals):
-            values[code] = str(sum(totals))
-        elif findings and all(r.findings for r in chosen):
+        if findings and all(r.findings for r in chosen):
             values[code] = str(sum(s in {code, name} and status == 'open' for s, status in findings.values()))
+        elif all(v is not None for v in totals):
+            values[code] = ' / '.join(str(v) for v in totals)
         else:
             values[code] = '?'
-    counts = Fact(' '.join(f'{c}:{values[c]}' for c in names),
-                  'partial' if '?' in values.values() else 'authoritative',
+    separate = len(chosen) > 1 and not all(r.findings for r in chosen)
+    qualifier = ' (per report; overlap unknown)' if separate else ''
+    counts = Fact(' '.join(f'{c}:{values[c]}' for c in names) + qualifier,
+                  'partial' if separate or '?' in values.values() else 'authoritative',
                   'stale' if historical else 'fresh', evidence)
     return qa, round_fact, counts
