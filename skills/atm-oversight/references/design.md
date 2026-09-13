@@ -5,13 +5,15 @@ The four outputs and acceptance requirements are defined in
 [requirements.md](requirements.md). Agent operation is defined in
 [SKILL.md](../SKILL.md). These documents have different jobs; this document owns
 the data, query and composition contracts below.
+The [query command catalog](queries.md) contains the exact command forms and
+verification boundaries for development; it is the command reference for this design.
 
 ## 1. Boundaries and direction of data
 
 | Piece | Responsibility | Must not do |
 |---|---|---|
 | Immutable data structures | Represent source observations, composed state, query results and problems | Query, persist, send messages, or contain workflow methods |
-| Independent queries | Read a named source for a stated question and return typed source state | Invoke other monitoring queries, combine sources, mutate shared state, or alert |
+| Independent queries | Read a named source for a stated question and return typed source state | Invoke other monitoring queries, combine sources, mutate shared monitoring state, or alert |
 | Answer functions | Reconcile source state and answer the four oversight questions; pure functions with explicit inputs | Perform I/O, hide source disagreement, or schedule work |
 | Cron | Run due queries, combine successful results, save state, compare old/new state and execute decisions | Contain source parsing or an entire agent investigation |
 
@@ -38,6 +40,7 @@ validation, reconciliation and decisions are separate functions.
 | `PhaseKey`, `SprintKey` | RepoKey + phase; PhaseKey + sprint | Stable table rows, including work without tasks/PRs |
 | `TaskKey`, `AgentKey` | ATM team + task ID; ATM team + agent ID | Ownership and idle detection |
 | `PRKey`, `CheckKey` | RepoKey + PR number; PRKey + head SHA + check identity + attempt | Exact-revision CI and conflict status |
+| `StackState` | RepoKey, identified stack/context, trunk, ordered branch members, parent relation, head/base SHA observations, PR reference, queued/merged/needsRebase facts | O1 hierarchy and O3 stack readiness; missing optional fields remain unknown |
 | `EvidenceRef` | Source, entity/event ID, source revision/sequence when available | Explain answers and deduplicate repeated evidence |
 | `PlanState` | Phase/sprint inventory, order, branch relations, plan revision | Complete O1 row inventory |
 | `TaskState` | TaskKey, sprint association, assignee, assigned/active/closed status, assigned/start times, queue position, dependency status, runnable/waiting/unknown fact, assignment/start/outcome evidence | O1/O2; assigned is not started, closed is not QA accepted |
@@ -122,8 +125,10 @@ is accepted. Shared data/result definitions do not turn queries into a collector
 | `atm_report.py` | What verdict/findings does this identified report contain? → ReviewState | One newly relevant message ID; not every message body |
 | `herdr_agents.py` | What are the selected agents doing? → AgentState portion | Current agents with outstanding work; one source surface |
 | `atm_members.py` | What agent observations does ATM have? → AgentState portion | Fallback with original observation time, not fresh merely because fetched now |
-| `gh_prs.py` | What are the relevant PR heads, bases, dispositions and merge states? → PRState portion | Configured phase/known PRs; bounded discovery of newly associated PRs for O1 only |
-| `gh_checks.py` | What checks exist on these active heads and what are their states? → CheckState portion | Exact PR heads; poll active work without relying on PR updatedAt |
+| `gh_prs.py` | What are the relevant PR heads, bases, dispositions, merge states and stack identities? → PRState portion + stack references | GraphQL search over a bounded window; retain active identities for subsequent polls |
+| `gh_pr_stack.py` | Which remote stack contains this PR? → stack membership portion | Conditional REST fallback if GraphQL membership is unavailable; cache/deduplicate |
+| `gh_stack.py` | What is this identified stack's topology and status? → StackState | Primary command `gh stack view --json`, run in its identified existing worktree; one call per distinct stack, not per sprint |
+| `gh_checks.py` | What is current readiness for identified active stack/member or standalone PRs? → remote StackState/PRState/CheckState portions | One bounded GraphQL node batch; exact heads and nested pageInfo; poll retained active work without relying on PR updatedAt |
 | `gh_requirements.py` | Which checks are expected for this branch/event? → required-check evidence | Cache explicit branch/workflow policy by revision; refresh when policy changes |
 | `gh_qa.py` | Does this PR have a revision-addressed QA report? → ReviewState portion | Conditional fallback for missing ATM report; do not equate a generic approval with QA |
 | `scheduler_runs.py` | Did the expected job/action actually execute? → execution receipt portion | Scheduler receipts; watchdog runs outside the supervised job |
@@ -138,6 +143,49 @@ Not all sources necessarily expose each proposed field. Each adapter contract
 must document that capability and return unknown coverage where absent. Do not
 invent a flag, infer completeness from exit zero, or expand to all history to
 make a question appear answerable.
+
+### gh-stack contract (O1/O3)
+
+Once a stack is identified, `gh_stack.py` uses `gh stack view --json` as the
+primary stack-status observation. Stack context is an explicit existing worktree
+whose checked-out branch identifies that stack unambiguously. Do not use an
+arbitrary repo root, interactive view, or a checkout mutation inside the query.
+The adapter validates the installed version's JSON shape.
+GraphQL supplies remote stack identity/order and current PR/check state in the
+two verified batches in [queries.md](queries.md). gh-stack supplies local
+maintenance status. Its view may refresh its own tracking cache; it does not
+write the monitor's state or authorize branch modification.
+
+Preserve trunk and ordered branch membership. Derive parent branch from order;
+the branch's `base` value is a SHA observation, not a parent branch name. Preserve
+`head`, `isMerged`, `isQueued`, `needsRebase` and PR association independently.
+Absent optional fields are unknown. A branch without a PR still belongs in the
+table. One phase may reference multiple stacks and non-stack PRs; do not force
+parallel work into one linear stack or equate a stack with a sprint.
+
+Stack `needsRebase` is local ancestry evidence, not proof of a GitHub merge conflict
+or authority to rebase. Compare local heads/base refs with current GitHub SHAs;
+if stale, use `git merge-base --is-ancestor` on the exact remote SHA pair when
+objects are available, otherwise return unknown with context-repair guidance.
+A successful exact-SHA comparison can supersede a stale local needsRebase value.
+Verify current conflicts/checks through exact PR/head
+state. Queue membership is a legitimate wait state; queue-specific check/head
+expectations must be established before calling CI absent or stuck. Parent merge
+or retargeting changes branch relationships and invalidates affected head/base
+assumptions; preserve unaffected history and avoid declaring a child complete.
+
+If stack view fails, remote GraphQL stack membership/order, queue and PR/CI facts
+remain usable; only local ancestry coverage degrades. If remote stack metadata
+also fails, use known PR head/base relationships for a degraded hierarchy, without
+inventing membership, queue state or needsRebase. A positively
+identified non-stack PR is normal supported work. Failure to find local stack
+context is not proof that the remote PR has no stack.
+
+Ambiguous membership, missing extension, unavailable GitHub and malformed JSON
+return classified problems with context and repair guidance. No query initializes,
+links, unlinks, checks out, rebases, synchronizes or merges stacks. Alert the
+responsible agent instead. Scope discovery/binding and a successful exact-version
+live fixture remain prerequisites to claiming verified stack compatibility.
 
 ### Query result union
 
@@ -351,6 +399,11 @@ not hidden constants invented by a query.
 | CI check is absent but required policy is unknown | Unknown start expectation; a different proven failed check still alerts |
 | Healthy poll crosses a stuck-check deadline | One new stuck condition despite no new provider event |
 | Old-head passing check and new PR head | Current head has unknown/pending coverage; old pass is historical |
+| Identified stack with branch lacking a PR | Preserve ordered branch row and unknown PR/CI, not an omitted sprint |
+| Parent merged or child retargeted | Refresh affected topology/PR assumptions; no false child completion |
+| Queued stack plus pending checks | Preserve queue state; use applicable queue policy before overdue classification |
+| Stack view unavailable; PRs readable | Degraded PR hierarchy and stack-query repair problem; no invented stack health |
+| Multiple stacks and ordinary PRs in one phase | Distinct stack groups with correct trunk/parent relations and standalone PR rows |
 | Partial page plus complete independent query | Positive facts accepted, incomplete checkpoint retained; independent success advances |
 | Query fails after an incident was raised | Incident remains unresolved; recovery cannot be inferred from missing data |
 | Restart after action reservation | Resume/reconcile delivery; no lost intent or blind repeated send |

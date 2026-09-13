@@ -12,6 +12,8 @@ This repository has four outputs:
 The [requirements](skills/atm-oversight/references/requirements.md) define the
 four outcomes. The [design](skills/atm-oversight/references/design.md) specifies
 immutable state, independent queries, source reconciliation and cron decisions.
+The [command catalog](skills/atm-oversight/references/queries.md) gives fenced
+commands, verified GraphQL operations and explicit failure/recovery behavior.
 The [operating skill](skills/atm-oversight/SKILL.md) tells Omega how to use them
 and recover failures. [Distribution](docs/distribution.md) explains verified
 upgrades and recovery. No template administration, naming campaign or
