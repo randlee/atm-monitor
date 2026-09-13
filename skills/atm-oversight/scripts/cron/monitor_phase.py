@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 
 from check_health import evaluate
+from merge_uncertainty import unresolved_incidents
 from collectors import collect
 from state_store import BusyError, read_latest
 from tick import load_config, run_tick
@@ -59,6 +60,7 @@ def monitor(config, activity_dir, state_dir, max_age_seconds=600, collector=coll
     snapshot = json.loads(Path(result['snapshot']).read_text(encoding='utf-8'))
     findings = evaluate(snapshot)
     result.update(monitored_teams=[team['name'] for team in teams], activity_warnings=warnings,
+                  unresolved_incidents=unresolved_incidents(snapshot),
                   findings=findings, notify=[item for item in findings if item['pending_routes']])
     if warnings:
         result['status'] = 'degraded'

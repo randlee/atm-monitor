@@ -65,6 +65,11 @@ required checks. Inspect the exact active PR head. A conflict can prevent CI
 from starting; repeated polling is not an investigation. Distinguish pending,
 failed, absent and unknown evidence. Apply configured start/runtime thresholds.
 
+GitHub `UNKNOWN` is unfinished evidence, not recovery. Leave the merge incident
+unresolved and query again on the next scheduled tick (currently five minutes).
+Do not wake an agent merely for this transient state or repeat an unchanged
+blocker when GitHub finishes computing it. A new PR head remains new evidence.
+
 Determine whether an owner already has a fix assignment before alerting.
 For example, after a QA rejection, inspect that report and its follow-up task:
 a known assigned fix is different from an unowned blocker. Send actionable CI

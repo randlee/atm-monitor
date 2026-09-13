@@ -4,11 +4,10 @@
 import argparse
 import hashlib
 import json
-import os
 from pathlib import Path
-import tempfile
 
 from state_store import BusyError, locked
+from gate_store import _load, _save
 
 
 STATE_VERSION = 1
@@ -87,33 +86,9 @@ def evaluate_gate(result, previous=None):
             decision['wakeAgent'] = True
     if coverage_good:
         for key, prior in list(state['incidents'].items()):
-            if key not in current and prior['active']:
+            if key not in current and key not in result.get('unresolved_incidents', []) and prior['active']:
                 state['incidents'][key] = {'active': False, 'wake_sent': False}
     return decision, state
-
-
-def _load(path):
-    if not path.exists():
-        return None
-    try:
-        return json.loads(path.read_text(encoding='utf-8'))
-    except (OSError, ValueError) as exc:
-        raise ValueError('corrupt agent gate state') from exc
-
-
-def _save(path, state):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, name = tempfile.mkstemp(prefix='.agent-gate-', dir=path.parent)
-    try:
-        with os.fdopen(fd, 'w', encoding='utf-8') as out:
-            json.dump(state, out, sort_keys=True, separators=(',', ':'))
-            out.write('\n')
-            out.flush()
-            os.fsync(out.fileno())
-        os.replace(name, path)
-    finally:
-        if os.path.exists(name):
-            os.unlink(name)
 
 
 def main():
