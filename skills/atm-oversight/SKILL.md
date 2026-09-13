@@ -11,6 +11,8 @@ alerts, CI/merge-readiness alerts, and self-healing. The
 are not proof it is implemented; report their actual limitations.
 Use the [design](references/design.md) for state/query contracts and field-level
 source authority, fallback and conflict rules.
+The runtime adapter and operator boundaries are documented in
+[references/runtime.md](references/runtime.md); use its exact commands for reports, recovery and delivery receipts.
 
 ## Continuous operation
 
@@ -104,3 +106,12 @@ evidence. Do not repeat unchanged alerts or infer recovery from missing data.
 Record new meaningful changes; invoke an agent only when attention is warranted.
 When Rand asks, return the table and actionable findings, not collection counts,
 test totals or claims that a process running proves oversight works.
+
+## Runtime boundary
+
+The replacement runtime runs independent bounded queries and composes immutable
+observations. Query results are `ok`, `partial`, or `error`; partial coverage and
+typed repair diagnostics remain visible. Cron persists action intent; `record_action` attaches
+an actual delivery receipt outside domain equality. Never treat a wake request,
+an agent process, or a fallback observation as proof of delivery or recovery.
+Use the exact command and evidence rules in [the runtime reference](references/runtime.md).

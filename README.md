@@ -23,6 +23,7 @@ phase-lifecycle platform is part of this repository.
 
 | Files | Outcome supported |
 |---|---|
+| `skills/atm-oversight/scripts/runtime/`, `assets/runtime.example.json`, `references/runtime.md` | O1–O4: replacement typed queries, immutable answers, persistence, scheduled runtime and watchdog |
 | `skills/atm-oversight/scripts/oversight/report.py`, `branch_tree.py`, `mine_messages.py`, `phase_events.py` | O1: table, branch hierarchy, QA evidence and status history |
 | `scripts/cron/discovery.py`, `scripts/plan_metadata.py`, `assets/monitor.example.json`, `skills/oversight-onboarding/` | O1: associate sprint plans and configure the table's repository/phase scope |
 | `scripts/cron/collectors.py`, `collect_*.py`, `github_inventory.py` within the oversight skill | O1–O3: source adapters and inputs; O4: source failure reporting |
@@ -35,12 +36,13 @@ phase-lifecycle platform is part of this repository.
 
 ## Actual implementation status
 
-The current scripts provide a sprint table, CI/conflict findings, snapshots and
-wake deduplication. They do **not** meet the full contract: assigned-but-idle,
-never-started/stuck-check classification, immutable state and independently
-composable typed-error queries remain unfinished. The legacy tick rereads task
-histories. Passing its tests does not establish completion of the four outputs.
-The latest design changes have not been deployed to the running Omega profile.
+The replacement runtime is in `skills/atm-oversight/scripts/runtime/`.
+Frozen source records feed independent queries, per-field answer functions and
+per-repository persisted state. It implements idle investigations, exact-head CI
+failure/conflict/start/stuck checks, durable wake deduplication and a separate
+watchdog. See the [runtime manual](skills/atm-oversight/references/runtime.md)
+for commands and honest coverage limits. The old cron modules remain for
+compatibility and rollback; the replacement does not read task histories.
 
 ```sh
 python3 -m unittest discover -s skills/atm-oversight/tests -v

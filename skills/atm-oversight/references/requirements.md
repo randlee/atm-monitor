@@ -1,6 +1,6 @@
 # Four oversight outcomes
 
-This is the proposed contract, not a claim that the deployed collectors meet it.
+This is the acceptance contract. Deployment and live evidence are recorded separately.
 Only the following four outcomes are in scope, continuously across dozens of repos.
 The [design](design.md) specifies data structures, query contracts, evidence
 reconciliation and decisions. It refines these requirements without adding outputs.

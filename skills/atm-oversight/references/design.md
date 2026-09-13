@@ -1,6 +1,7 @@
 # State and query design
 
-Design specification; no replacement runtime is implemented by this document.
+Design contract. The implementation lives in `scripts/runtime/`;
+[runtime.md](runtime.md) gives executable entrypoints and current evidence limits.
 The four outputs and acceptance requirements are defined in
 [requirements.md](requirements.md). Agent operation is defined in
 [SKILL.md](../SKILL.md). These documents have different jobs; this document owns

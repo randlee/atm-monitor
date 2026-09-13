@@ -219,11 +219,14 @@ IDs/order/branches; missing mandatory plan metadata is an explicit coverage issu
 ### atm_tasks.py — current ownership/start state
 
 ```sh
-atm task list --team "$team" --as "$actor" --all --limit 100 --json
+atm task list --team "$team" --as "$actor" --all --json
 ```
 
-Current queue only; reaching the bound requires continuation by supported scope
-or an incomplete result. This is not a historical task inventory. A task leaving
+The installed ATM CLI rejects combining `--all` and `--limit`; the `--all`
+surface is the bounded current open-task queue and must be accepted only after
+validating its response size against the configured adapter budget. Current queue
+only; reaching the bound requires continuation by supported scope or an incomplete
+result. This is not a historical task inventory. A task leaving
 the queue does not prove completion. Do not fan out into all task histories.
 
 ### atm_workflow.py — bounded declared workflow changes

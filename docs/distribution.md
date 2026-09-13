@@ -35,5 +35,12 @@ scheduled run and its table/alert/error behavior. A missed run needs a watchdog
 outside the failed job. Escalate persistent defects to amon@atm-monitor with
 question/job identity, failure evidence, attempted recovery and impact.
 
-The four-outcome scope cleanup is a repository change. It has not replaced the
-installed runtime or established that missing idle/stuck-CI behavior exists.
+For the replacement runtime, use separate schema-2 configuration and state
+paths. Do not point it at the legacy state directory. Copy the configured
+launcher and preserve its previous contents for rollback. The launcher must
+execute `runtime_main.py` as a subprocess/program, or guard `runpy` with
+`if __name__ == '__main__'`: repository workers use multiprocessing spawn.
+Update the scheduler prompt to the runtime manual and actual receipt command.
+Schedule `watchdog_main.py` separately with its own state directory. Both jobs
+emit `wakeAgent:false` on quiet ticks. Their common host/gateway remains a shared
+failure domain; a host outage needs an external host monitor.
