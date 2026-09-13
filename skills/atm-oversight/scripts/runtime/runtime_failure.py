@@ -6,12 +6,17 @@ from answer_types import Envelope, DomainState, Condition
 from incident_decisions import decide, reserve
 from command_query import failure
 from runtime_registry import REGISTRY
-from state_disk import load, save
+from state_disk import load, save, locked
 from time_rules import iso
 
 
 def record(directory, subject, error=None, shadow=False):
     directory = Path(directory) / 'runtime-failure'
+    with locked(directory / 'runner'):
+        return _record(directory, subject, error, shadow)
+
+
+def _record(directory, subject, error, shadow):
     previous, _ = load(directory, Envelope, REGISTRY)
     if error is None and previous is None:
         return ()
