@@ -120,3 +120,11 @@ are shown with their actual base, while missing owner/history stays unknown.
 Automatic phase discovery/closure is outside these four-output requirements;
 multiple configured phases share their repository tick. The watchdog is separate
 from the primary job but shares its machine and Hermes gateway.
+
+For local `gh stack view` exit 2/6, the adapter tries at most two discovered
+member worktrees in one query. A GitHub stack does not guarantee every member
+worktree has local gh-stack tracking. Errors retain the stack ID and actual
+`cwd` paths; retryable context failures escalate after the configured budget.
+The legacy `monitor.json` worktrees array is not used by this runtime. Remote
+stack/check and exact-SHA ancestry evidence continues independently. Do not
+initialize, check out or rewrite a monitored stack to repair observation.

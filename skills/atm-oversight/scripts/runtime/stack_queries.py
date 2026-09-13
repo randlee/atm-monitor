@@ -29,8 +29,9 @@ def calls(repo, slots, policy, now):
         output.append(('gh_checks:stack:' + identity, lambda i=identity, c=cursor:
                        gh_checks.query((i,), scope=repo['slug'], timeout=policy.command_timeout, budget=policy.github_page_budget, continuation=c)))
         if path:
-            output.append(('gh_stack:' + identity, lambda p=path:
-                           gh_stack.query(p, timeout=policy.command_timeout)))
+            other_paths = tuple(p for p in candidates if p != path)[:1]
+            output.append(('gh_stack:' + identity, lambda p=path, a=other_paths, i=identity:
+                           gh_stack.query(p, scope=i, timeout=policy.command_timeout, alternatives=a)))
             for member in members:
                 key = f'gh_ancestry:{member.number}'
                 previous = next((s for s in slots if s.key == key), None)

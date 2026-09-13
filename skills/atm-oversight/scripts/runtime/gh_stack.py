@@ -1,5 +1,6 @@
 """Read-only local gh-stack view and exact-SHA ancestry evidence."""
 import json
+from dataclasses import replace
 from command_query import execute, now_iso
 from query_types import Error, Ok, Partial, Problem
 from pr_types import StackView, Ancestry
@@ -11,9 +12,21 @@ from query_guard import guarded
 
 
 @guarded('gh_stack','gh')
-def query(repo_path, *, scope='stack', timeout=30):
-    views = execute('gh_stack','github',scope,('gh','stack','view','--json'),cwd=repo_path,timeout=timeout)
-    if isinstance(views, Error): return views
+def query(repo_path, *, scope='stack', timeout=30, alternatives=()):
+    failures = []
+    for path in tuple(dict.fromkeys((repo_path, *alternatives)))[:2]:
+        views = execute('gh_stack','github',scope,('gh','stack','view','--json'),cwd=path,timeout=timeout)
+        if not isinstance(views, Error):
+            break
+        failures.append(f'cwd={path}: {views.problem.diagnostics or views.problem.message}')
+        if views.problem.exit_code not in (2, 6):
+            break
+    if isinstance(views, Error):
+        problem = replace(views.problem, diagnostics='\n'.join(failures)[-2000:])
+        if problem.exit_code in (2, 6):
+            problem = replace(problem, kind='local-stack-context', retryable=True,
+                repair='Retry a discovered member worktree with local gh-stack tracking. Remote stack/check and exact ancestry queries remain independent; do not initialize or change the monitored stack.')
+        return replace(views, problem=problem)
     try: raw = json.loads(views.stdout)
     except (TypeError, ValueError) as exc:
         return Error('gh_stack','github',scope,now_iso(),_problem('invalid-response',str(exc),('gh','stack','view','--json'),repair='Check gh-stack version and JSON schema.'))
