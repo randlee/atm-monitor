@@ -56,7 +56,7 @@ def write_report(path, envelope):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(dir=path.parent, prefix='.report-')
     try:
-        with os.fdopen(fd, 'w') as stream:
+        with os.fdopen(fd, 'w', encoding='utf-8') as stream:
             stream.write(render(envelope))
             stream.flush()
             os.fsync(stream.fileno())
