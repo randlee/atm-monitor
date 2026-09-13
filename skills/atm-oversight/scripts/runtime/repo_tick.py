@@ -16,6 +16,7 @@ from state_disk import load, save, locked
 from time_rules import iso
 from stack_queries import calls as stacks
 from retire_conditions import retire
+from idle_dispositions import apply as apply_dispositions
 from fallback_queries import calls as fallbacks
 
 
@@ -37,6 +38,7 @@ def tick(repo, directory, policy, now, agents, shadow=False):
         slots = execute_calls(fallbacks(repo, slots, policy, now), slots, policy, now)
         now = time.time()
         state, timers = compose(repo, slots, policy, now, previous.timers if previous else ())
+        state = apply_dispositions(state, slots)
         state = retire(state, previous.incidents if previous else ())
         incidents = decide(state.conditions, previous.incidents if previous else (), now)
         intents, events = reserve(incidents, now) if not shadow else (incidents, ())

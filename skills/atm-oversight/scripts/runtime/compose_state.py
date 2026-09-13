@@ -1,6 +1,7 @@
 """Combine source portions into O1–O4 without hiding a failed refresh."""
 from dataclasses import replace
 from answer_types import DomainState
+from activity_types import OwnerActivity
 from assignment_types import AssignmentState, AgentState
 from pr_types import PR, Check, Requirement
 from work_types import Sprint, Task, Agent, Member, Report, WorkflowEvent
@@ -11,6 +12,7 @@ from query_memory import recovery
 import ci_answers
 import readiness_answers
 import idle_answers
+from idle_dispositions import conditions as resolved_conditions
 import row_answers
 import stack_answers
 import branch_answers
@@ -42,7 +44,10 @@ def compose(repo, slots, policy, now, timers=()):
                      if isinstance(r, Requirement) and r.state == 'expected')) for s in slots
                      if s.key.startswith('gh_requirements:') and s.last_good and s.latest.status == 'ok')
     ci, clock = readiness_answers.answer(prs, slots, policy, now, timers, expected)
-    idle, clock = idle_answers.answer(tasks, agents, policy, now, clock, 'atm_tasks' in stale)
+    activity = tuple(a for s in slots if s.key.startswith('atm_owner_activity:')
+                     and s.latest.status == 'ok' for a in s.latest.data if isinstance(a, OwnerActivity))
+    idle, clock = idle_answers.answer(tasks, agents, policy, now, clock, 'atm_tasks' in stale, activity)
+    idle = resolved_conditions(idle, slots)
     conditions = tuple(sorted((*ci, *idle, *stack_answers.answer(slots, prs), *recovery(slots, policy)), key=lambda c: c.key))
     reports = {}
     events = {e.report_id: e for e in data(slots, 'atm_workflow', WorkflowEvent)}

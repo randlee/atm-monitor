@@ -331,3 +331,21 @@ Required-check policy and scheduler machine-readable receipts remain unresolved.
 Nested-pagination, rate-limit, permission-failure and multi-stack fixtures still
 need execution before claiming full production compatibility; the contract above
 specifies their required behavior without claiming they were all observed live.
+
+### Conditional owner activity — `atm_owner_activity.py` (O2)
+
+Question: has the owner sent any message during this idle-grace window?
+
+```sh
+atm search --team TEAM --from OWNER --since START --until END --limit 1 --json
+```
+
+Only runnable assignments with idle harness observations need this query. One
+matching sender/team/time witness answers existence completely, even if more
+pages exist. Positive sends suppress an idle investigation and reset its timer.
+Retain observer host and window provenance. Empty results establish no witness
+in that store; they never prove owner-host inactivity. Errors remain unknown.
+Before a stalled/restart escalation, obtain owner-host progress evidence or an
+owner reply; pane titles and task-reminder counts cannot substitute for it.
+Persist an investigation disposition using the runtime manual's resolution
+command, rather than merely acknowledging delivery of the original alert.

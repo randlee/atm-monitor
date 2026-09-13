@@ -56,7 +56,28 @@ read a specific QA report to obtain its verdict and counts.
 
 Join fresh agent state to outstanding assignments. Check queue position,
 dependencies, recent acknowledgment and background/tool activity before calling
-work stalled. An idle observation alone is not a stalled task. If action is
+work stalled. An idle observation alone is not a stalled task. Orchestrators are commonly idle
+between turns while delegated work continues. Recent outbound orchestration
+messages, commits and PR work are positive activity evidence. Task-reminder
+counts are not stall evidence; a static pane title is never a prompt.
+
+A candidate wake begins an investigation, not an accusation. Record which host,
+team and store a command actually queried. Empty observer-side queues, searches,
+peeks or event results do not prove absence on the owner host. Before escalating,
+obtain verified owner-host evidence or ask the owner directly for progress with
+an explicit response deadline. Arrange one deadline follow-up, cancel it when
+resolved, and treat silence as an unresolved investigation, not a proven stall.
+
+Persist owner-confirmed working/false-positive outcomes with `record_resolution.py`
+using the owner's actual reply ID or verified host evidence. A delivery receipt
+alone does not record a resolution. The same assignment remains suppressed until
+explicitly reopened with new evidence; time passing or another idle observation
+is not new evidence. New assignments have their own incident identity.
+
+Never ask an agent to restart its own harness. A restart is an operator/host-owner
+decision requiring verified evidence and authority. If that owner is unknown,
+escalate the evidence and decision to amon@atm-monitor; do not recommend or perform
+a restart based on an idle finding. If action is
 needed, alert the responsible owner with task, agent, evidence/time and next
 step. Do not restart agents or close tasks merely because monitoring flags them.
 

@@ -1,13 +1,14 @@
 """Select identified current PRs and reports; never scan task histories."""
 import atm_report
+import atm_owner_activity
 import atm_members
 import gh_checks
 import gh_requirements
 import gh_git_context
 from pr_types import PR
-from work_types import WorkflowEvent
+from work_types import WorkflowEvent, Task, Agent
 from source_queries import data
-from time_rules import elapsed
+from time_rules import elapsed, iso
 from source_binding import scope
 from query_memory import due
 
@@ -19,6 +20,14 @@ def calls(repo, slots, policy, now):
     known = [p for p in candidates.values() if any(p.head.startswith(x) for x in repo['branch_prefixes'])]
     ids = sorted({p.node_id for p in known if p.state == 'OPEN'} | set(repo.get('seed_pr_ids', ())))
     work = []
+    idle = {a.agent_id for a in data(slots, 'herdr_agents', Agent) if a.state.lower() == 'idle'}
+    owners = sorted({t.assignee for t in data(slots, 'atm_tasks', Task) if t.assignee in idle
+                     and (t.status == 'active' or t.queue_position == 1)})
+    owners.sort(key=lambda a: previous['atm_owner_activity:' + a].latest.observed_at
+                if 'atm_owner_activity:' + a in previous else '')
+    for owner in owners[:policy.detail_budget]:
+        work.append(('atm_owner_activity:' + owner, lambda a=owner: atm_owner_activity.query(
+            repo['team'], a, iso(now - policy.idle_grace_seconds), iso(now), policy.command_timeout)))
     harness = previous.get('herdr_agents')
     if harness and harness.latest.status == 'error':
         work.append(('atm_members', lambda: atm_members.query(repo['team'], timeout=policy.command_timeout)))

@@ -27,7 +27,7 @@ class AnswerTests(unittest.TestCase):
 
  def test_idle_unknown_background_and_stale_does_not_clear(self):
   task=Task('t',status='active',assignee='a'); agent=Agent('a','idle','1970-01-01T00:00:00+00:00','t',None)
-  out,t=idle((task,),(agent,),P,100); self.assertEqual(out[0].status,'clear')
+  out,t=idle((task,),(agent,),P,100); self.assertEqual(out[0].status,'unknown')
   agent2=Agent('a','idle','1970-01-01T00:01:00+00:00','t','none')
   out,t=idle((task,),(agent2,),P,1000,timers=(Timer('idle:t','1970-01-01T00:00:00+00:00'),))
   self.assertEqual(out[0].status,'unknown'); self.assertEqual(t,())

@@ -128,3 +128,28 @@ worktree has local gh-stack tracking. Errors retain the stack ID and actual
 The legacy `monitor.json` worktrees array is not used by this runtime. Remote
 stack/check and exact-SHA ancestry evidence continues independently. Do not
 initialize, check out or rewrite a monitored stack to repair observation.
+
+
+## Idle investigation evidence and resolution
+
+The conditional `atm_owner_activity.py` query asks whether an owner sent any
+message inside the configured idle-grace window. `atm search --team TEAM --from
+OWNER --since START --until END --limit 1 --json` returns at most one positive
+witness; more pages are unnecessary for this existence question. Host provenance
+is retained. A failed query leaves this evidence unknown; an empty local result
+is not proof of owner-host inactivity. Positive recent sends reset the idle timer.
+The adapter only schedules these queries for runnable assignments with idle
+harness observations, within the detail budget; owners rotate fairly.
+
+After a verified owner reply or owner-host investigation, persist the outcome:
+
+```sh
+python3 scripts/runtime/record_resolution.py --state-dir /deployment/runtime/OWNER--REPO --incident 'EXACT_IDLE_KEY' --outcome false-positive --reason 'Owner confirmed active orchestration' --evidence ACTUAL_OWNER_REPLY_MESSAGE_ID
+```
+
+Use `resolved` for a completed investigation and `reopen` only with new evidence
+and an explicit reason. These durable dispositions survive working/idle changes,
+restart and repeated observation windows. They do not suppress a new assignment
+identity. The command preserves delivery receipts and records the domain change.
+Preserve a pre-upgrade state archive when installing this version: earlier bundles
+cannot decode its new activity/disposition record types.
