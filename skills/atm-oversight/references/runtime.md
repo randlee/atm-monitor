@@ -169,3 +169,10 @@ links, current PR revisions and successful ancestry for every open member. A
 negative ancestry answer still supports a maintenance finding. Stale, partial,
 failed or mismatched fallback results restore the local repair incident; other
 query failures are not suppressed. No blanket per-stack exemption is stored.
+
+Retire stack-local repair conditions when provider evidence positively closes
+all known members and no known member remains open. PR observations are selected
+by provider `updatedAt`, then receipt time; an older stack snapshot cannot overwrite
+a newer merge/closure. Expiration of that retired snapshot is not a new incident.
+Missing closure evidence is insufficient. A later reopened/new open member restores
+monitoring. Closure also retires prior CI/merge/ancestry incidents for those PRs.

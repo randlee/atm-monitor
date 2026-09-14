@@ -3,12 +3,12 @@ import gh_stack
 import gh_checks
 from command_query import failure
 from pr_types import PR
+from current_prs import select
 from source_queries import data
 
 
 def calls(repo, slots, policy, now):
-    current = {p.node_id: p for p in data(slots, 'gh_prs', PR)}
-    current.update({p.node_id: p for p in data(slots, 'gh_checks', PR)})
+    current = {p.node_id: p for p in select(slots)}
     groups = {}
     for pr in current.values():
         if pr.stack_id and pr.state == 'OPEN' and any(pr.head.startswith(p) for p in repo['branch_prefixes']):

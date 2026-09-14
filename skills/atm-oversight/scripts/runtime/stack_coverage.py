@@ -1,5 +1,6 @@
 """Accept remote stack coverage without claiming local tracking was repaired."""
 from dataclasses import replace
+from current_prs import select
 from pr_types import PR, Stack, Ancestry
 from time_rules import fresh
 
@@ -38,6 +39,17 @@ def covered(identity, slots, prs, policy, now):
     return True
 
 
+def retired(identity, slots):
+    remote = next((s for s in slots if s.key == 'gh_checks:stack:' + identity), None)
+    if not remote or not remote.last_good:
+        return False
+    stack = next((s for s in remote.last_good.data if isinstance(s, Stack) and s.node_id == identity), None)
+    current = {p.node_id: p for p in select(slots)}
+    if not stack or not stack.members or any(p.stack_id == identity and p.state == 'OPEN' for p in current.values()):
+        return False
+    return all(p.node_id in current and current[p.node_id].state in {'MERGED', 'CLOSED'} for p in stack.members)
+
+
 def reconcile(conditions, slots, prs, policy, now):
     queries = {s.key: s for s in slots}
     output = []
@@ -46,7 +58,11 @@ def reconcile(conditions, slots, prs, policy, now):
         if condition.subject.startswith('gh_stack:') and slot and slot.latest.status == 'error':
             if slot.latest.problem.kind == 'local-stack-context':
                 identity = condition.subject.split(':', 1)[1]
-                if covered(identity, slots, prs, policy, now):
+                if retired(identity, slots):
+                    condition = replace(condition, status='clear', kind='coverage-note',
+                        detail='All known stack PRs are positively closed or merged; local stack observation is retired.',
+                        evidence=(identity,))
+                elif covered(identity, slots, prs, policy, now):
                     condition = replace(condition, status='clear', kind='coverage-note', detail=
                         'Remote stack order, current readiness and exact ancestry cover monitored PRs. '
                         'Local tracking remains unavailable; unpublished local branches are unknown.',

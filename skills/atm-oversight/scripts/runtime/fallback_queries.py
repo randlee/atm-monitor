@@ -1,6 +1,6 @@
 """Conditional QA fallback for an identified head; cache until PR evidence changes."""
 import gh_qa
-from pr_types import PR
+from current_prs import select
 from work_types import Report
 from source_queries import data
 from source_binding import aliases
@@ -10,7 +10,7 @@ from query_memory import due
 
 def calls(repo, slots, policy, now):
     prior = {s.key: s for s in slots}
-    prs = data(slots, 'gh_checks', PR)
+    prs = select(slots)
     reports = tuple(r for s in slots if s.key.startswith('atm_report:')
                     for r in data(slots, s.key, Report))
     groups = dict(aliases(repo, prs))

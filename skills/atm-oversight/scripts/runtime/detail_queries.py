@@ -6,6 +6,7 @@ import gh_checks
 import gh_requirements
 import gh_git_context
 from pr_types import PR
+from current_prs import select
 from work_types import WorkflowEvent, Task, Agent
 from source_queries import data
 from time_rules import elapsed, iso
@@ -15,8 +16,7 @@ from query_memory import due
 
 def calls(repo, slots, policy, now):
     previous = {s.key: s for s in slots}
-    candidates = {p.node_id: p for p in data(slots, 'gh_checks', PR)}
-    candidates.update({p.node_id: p for p in data(slots, 'gh_prs', PR)})
+    candidates = {p.node_id: p for p in select(slots)}
     known = [p for p in candidates.values() if any(p.head.startswith(x) for x in repo['branch_prefixes'])]
     ids = sorted({p.node_id for p in known if p.state == 'OPEN'} | set(repo.get('seed_pr_ids', ())))
     work = []
