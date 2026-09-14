@@ -100,6 +100,21 @@ unresolved and query again on the next scheduled tick (currently five minutes).
 Do not wake an agent merely for this transient state or repeat an unchanged
 blocker when GitHub finishes computing it. A new PR head remains new evidence.
 
+Separate a failed check from its cause and from merge eligibility. Before calling
+it a PR regression, inspect the failed job and compare the failure signature with
+the relevant base revision when available. An owner-confirmed pre-existing failure
+belongs to shared repository remediation; retain the owner reply and baseline
+revision, avoid repeated PR-specific fix requests, and keep CI visibly failed.
+Different changed files alone do not prove an environmental or transient failure.
+A successful retry or matching baseline evidence can support that classification;
+until then label the cause unknown. `MERGEABLE` means no merge conflict, not that
+required checks passed: report `mergeStateStatus` and outstanding checks separately.
+
+For a delivery-overdue finding, reconcile the actual delivery receipt before
+resending. Investigation does not finish with “monitor for retry”: identify who
+owns the retry or diagnosis and what scheduled observation will close or escalate
+it. An already informed owner needs a new material fact before another alert.
+
 Determine whether an owner already has a fix assignment before alerting.
 For example, after a QA rejection, inspect that report and its follow-up task:
 a known assigned fix is different from an unowned blocker. Send actionable CI
