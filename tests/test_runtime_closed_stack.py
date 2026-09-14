@@ -72,3 +72,13 @@ class ClosedStackTests(unittest.TestCase):
         slots = (*self.fixtures(), slot('gh_checks', (OPEN,), 100))
         for module in (detail_queries, stack_queries, fallback_queries):
             self.assertEqual(module.calls(repo, slots, P, 5000), [])
+
+    def test_closed_pr_retires_missing_required_check(self):
+        from readiness_answers import answer
+        from retire_conditions import retire
+        from answer_types import DomainState, Incident
+        conditions, _ = answer((CLOSED,),self.fixtures(),P,5000,expected=(('main',('test',)),))
+        prior = Condition('pr:1:h:missing:test','ci-not-started','1','h','active','lead','missing')
+        state = retire(DomainState('r',(),conditions,'complete'),
+                       (Incident(prior.key,prior,True,'delivered',iso(1)),))
+        self.assertEqual(next(c.status for c in state.conditions if c.key==prior.key),'clear')

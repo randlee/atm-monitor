@@ -14,6 +14,7 @@ def answer(prs, slots, policy, now, timers=(), expected=()):
             conditions.append(Condition(f'pr:{pr.number}:{pr.head_sha}:closed', 'pr-closed',
                 str(pr.number), pr.head_sha, 'clear', 'team-lead',
                 'Provider confirms PR ' + pr.state.lower() + '.', (pr.node_id, pr.updated_at)))
+            continue
         candidates = []
         for slot in sources:
             if slot.latest.status == 'error' or not slot.last_good:
