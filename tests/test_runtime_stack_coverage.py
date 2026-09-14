@@ -48,6 +48,9 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(reconcile((COND,),fixtures()[:2],(PR1,),P,100)[0].status,'active')
         self.assertEqual(reconcile((COND,),fixtures(),(replace(PR1,head_sha='new'),),P,100)[0].status,'active')
 
+    def test_retargeted_base_with_same_sha_is_not_matching_topology(self):
+        self.assertEqual(reconcile((COND,),fixtures(),(replace(PR1,base='other'),),P,100)[0].status,'active')
+
     def test_other_query_failures_are_not_suppressed(self):
         original = fixtures()[0].latest
         error = replace(original,problem=replace(original.problem,kind='access'))

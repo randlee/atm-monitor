@@ -22,6 +22,8 @@ def covered(identity, slots, prs, policy, now):
         pr = current.get(member.node_id)
         if not pr or pr.head_sha != member.head_sha or pr.base_sha != member.base_sha:
             return False
+        if (pr.head, pr.base, pr.state, pr.stack_id) != (member.head, member.base, member.state, identity):
+            return False
         if member.stack_id != identity or member.base != parent:
             return False
         parent = member.head
