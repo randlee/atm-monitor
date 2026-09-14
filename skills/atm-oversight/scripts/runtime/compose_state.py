@@ -15,6 +15,7 @@ import idle_answers
 from idle_dispositions import conditions as resolved_conditions
 import row_answers
 import stack_answers
+from stack_coverage import reconcile as reconcile_coverage
 import branch_answers
 
 
@@ -48,7 +49,8 @@ def compose(repo, slots, policy, now, timers=()):
                      and s.latest.status == 'ok' for a in s.latest.data if isinstance(a, OwnerActivity))
     idle, clock = idle_answers.answer(tasks, agents, policy, now, clock, 'atm_tasks' in stale, activity)
     idle = resolved_conditions(idle, slots)
-    conditions = tuple(sorted((*ci, *idle, *stack_answers.answer(slots, prs), *recovery(slots, policy)), key=lambda c: c.key))
+    repairs = reconcile_coverage(recovery(slots, policy), slots, prs, policy, now)
+    conditions = tuple(sorted((*ci, *idle, *stack_answers.answer(slots, prs), *repairs), key=lambda c: c.key))
     reports = {}
     events = {e.report_id: e for e in data(slots, 'atm_workflow', WorkflowEvent)}
     for slot in slots:

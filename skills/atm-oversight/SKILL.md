@@ -38,7 +38,14 @@ assignment does not replace an agent-idle observation; local tests do not replac
 GitHub CI. Two copies of one report count once. Resolve source conflicts using
 the field's authority/revision rule, never by arrival order; otherwise preserve
 the disagreement and investigate. Failed primary queries retain repair ownership
-even when fallback keeps the report useful.
+even when fallback keeps the report useful. One explicit coverage case is a
+remote stack with no local gh-stack tracking: when fresh complete remote topology
+and readiness plus exact current ancestry answer O1/O3, accept remote observation
+and keep unpublished local branches unknown. A `coverage-note` records that
+choice; it does not claim the local query succeeded. Do not initialize tracking
+or request an owner decision solely to remove that local limitation. Missing,
+stale or partial fallback evidence restores repair escalation; authentication,
+provider and malformed-response errors are never covered by this exception.
 
 ## Phase/sprint table
 

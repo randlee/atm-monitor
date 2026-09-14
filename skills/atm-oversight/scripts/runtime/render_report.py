@@ -36,6 +36,9 @@ def render(envelope):
             lines.append('| ↳ ' + ' | '.join(cell(v) for v in (branch.branch, branch.parent,
                          branch.pr, branch.status, branch.maintenance)) + ' |')
     lines.extend(['', 'Evidence and coverage:', ''])
+    for condition in state.conditions:
+        if condition.kind == 'coverage-note':
+            lines.append('- ' + condition.subject + ': ' + condition.detail)
     for slot in envelope.slots:
         status = slot.latest.status
         line = f'- {slot.key}: {status}; observed {slot.latest.observed_at}'

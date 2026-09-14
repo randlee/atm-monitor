@@ -153,3 +153,19 @@ restart and repeated observation windows. They do not suppress a new assignment
 identity. The command preserves delivery receipts and records the domain change.
 Preserve a pre-upgrade state archive when installing this version: earlier bundles
 cannot decode its new activity/disposition record types.
+
+## Remote stacks without local tracking
+
+A successful complete `gh_checks:stack:ID` result supplies member order, parents
+and readiness. Exact `gh_ancestry:PR` results supply rebase/maintenance evidence
+for the current base/head pair. If these observations are complete and fresh,
+`local-stack-context` errors become an explicit `coverage-note`: remote-only
+observation is sufficient for the monitored PRs. Keep the original local query
+error visible and unpublished local branches unknown. Continue bounded local
+retries; do not initialize tracking or change worktrees to remove the limitation.
+
+Coverage acceptance requires matching stack identity, contiguous order, parent
+links, current PR revisions and successful ancestry for every open member. A
+negative ancestry answer still supports a maintenance finding. Stale, partial,
+failed or mismatched fallback results restore the local repair incident; other
+query failures are not suppressed. No blanket per-stack exemption is stored.
