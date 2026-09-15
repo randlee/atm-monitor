@@ -1,7 +1,7 @@
 """Combine source portions into O1–O4 without hiding a failed refresh."""
 from dataclasses import replace
 from answer_types import DomainState
-from current_prs import select as select_prs
+from current_prs import scoped
 from activity_types import OwnerActivity
 from assignment_types import AssignmentState, AgentState
 from pr_types import PR, Check, Requirement
@@ -32,8 +32,7 @@ def compose(repo, slots, policy, now, timers=()):
     if 'herdr_agents' in stale:
         agents = tuple(Agent(m.agent_id, m.state, m.observed_at, team=repo['team'])
                        for m in data(slots, 'atm_members', Member)) if 'atm_members' not in stale else ()
-    prs = tuple(sorted((p for p in select_prs(slots) if any(p.head.startswith(x)
-                       for x in repo['branch_prefixes'])), key=lambda p: p.number))
+    prs = tuple(sorted(scoped(repo, slots), key=lambda p: p.number))
     checks = data(slots, 'gh_checks', Check)
     tasks, provisional = bind_tasks(repo, sprints, tasks, data(slots, 'atm_workflow', WorkflowEvent), prs)
     current = next((s.latest for s in slots if s.key == 'gh_checks'), None)

@@ -176,3 +176,7 @@ by provider `updatedAt`, then receipt time; an older stack snapshot cannot overw
 a newer merge/closure. Expiration of that retired snapshot is not a new incident.
 Missing closure evidence is insufficient. A later reopened/new open member restores
 monitoring. Closure also retires prior CI/merge/ancestry incidents for those PRs.
+
+Branch prefixes select discovery seeds. Once a seed identifies a remote stack,
+all observed members enter readiness and ancestry coverage, including members
+whose branch prefixes differ. Unrelated standalone PRs retain the configured scope.
