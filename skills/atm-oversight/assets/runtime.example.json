@@ -1,0 +1,119 @@
+{
+  "schema_version": 2,
+  "policy": {
+    "command_timeout": 15,
+    "freshness_seconds": 600,
+    "idle_grace_seconds": 300,
+    "ci_start_seconds": 900,
+    "ci_queue_seconds": 1200,
+    "ci_run_seconds": 3600,
+    "retry_seconds": 60,
+    "retries": 2,
+    "overlap_seconds": 60,
+    "window_seconds": 86400,
+    "page_size": 100,
+    "repo_workers": 4,
+    "watchdog_seconds": 900,
+    "followup_seconds": 900,
+    "policy_refresh_seconds": 3600,
+    "detail_budget": 5,
+    "repo_timeout_seconds": 120,
+    "query_workers": 4,
+    "github_page_budget": 3
+  },
+  "repos": [
+    {
+      "slug": "randlee/atm-core",
+      "team": "atm-dev",
+      "actor": "omega-prime",
+      "path": "/absolute/path/to/atm-core",
+      "since": "2026-09-12T00:00:00Z",
+      "branch_prefixes": [
+        "feature/",
+        "fix/",
+        "integrate/",
+        "plan/",
+        "hotfix/",
+        "chore/"
+      ],
+      "phases": [
+        {
+          "phase": "BB",
+          "revision": "dfcac2666714beea519b30e648d0bd8d221166c1",
+          "plan": "docs/plans/phase-bb/phase-bb-plan.md",
+          "expected_sprints": 7
+        }
+      ],
+      "branch_patterns": {
+        "BB.1": [
+          "(?:feature|fix)/bb1(?:-.*)?"
+        ],
+        "BB.2": [
+          "(?:feature|fix)/bb2(?:-.*)?"
+        ],
+        "BB.3": [
+          "(?:feature|fix)/bb3(?:-.*)?"
+        ],
+        "BB.4": [
+          "(?:feature|fix)/bb4(?:-.*)?"
+        ],
+        "BB.5": [
+          "(?:feature|fix)/bb5(?:-.*)?"
+        ],
+        "BB.6": [
+          "(?:feature|fix)/bb6(?:-.*)?"
+        ],
+        "BB.7": [
+          "(?:feature|fix)/bb7(?:-.*)?"
+        ]
+      },
+      "scope_patterns": {
+        "BB.1": [
+          "BB\\.1(?:[- .][^/]+)?"
+        ],
+        "BB.2": [
+          "BB\\.2(?:[- .][^/]+)?"
+        ],
+        "BB.3": [
+          "BB\\.3(?:[- .][^/]+)?"
+        ],
+        "BB.4": [
+          "BB\\.4(?:[- .][^/]+)?"
+        ],
+        "BB.5": [
+          "BB\\.5(?:[- .][^/]+)?"
+        ],
+        "BB.6": [
+          "BB\\.6(?:[- .][^/]+)?"
+        ],
+        "BB.7": [
+          "BB\\.7(?:[- .][^/]+)?"
+        ]
+      },
+      "preferred_stack_contexts": [
+        "/absolute/path/to/existing/stack-member-worktree"
+      ],
+      "aliases": {
+        "BB.1": [
+          "feature/bb-collapsed"
+        ],
+        "BB.2": [
+          "feature/bb-collapsed"
+        ],
+        "BB.3": [
+          "feature/bb-collapsed"
+        ],
+        "BB.4": [
+          "feature/bb-collapsed"
+        ],
+        "BB.5": [
+          "feature/bb-collapsed"
+        ]
+      }
+    }
+  ],
+  "scheduler": {
+    "job_id": "primary-job-id",
+    "executions_db": "/absolute/path/to/hermes/profile/cron/executions.db"
+  }
+}
