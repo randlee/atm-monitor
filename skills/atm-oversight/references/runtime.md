@@ -14,7 +14,7 @@ Queries use argument arrays and explicit scopes:
 ```text
 atm task list --team TEAM --as ACTOR --all --json
 atm search --team TEAM --workflow-scope-kind sprint --since START --until END --limit 100 --json
-atm peek --team TEAM --as MAILBOX --message-id MESSAGE_ID --json
+atm peek --team TEAM --as MAILBOX --all --message-id MESSAGE_ID --json
 herdr agent list
 atm members --team TEAM --json
 git -C REPO show REVISION:PLAN_FILE

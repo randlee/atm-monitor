@@ -252,7 +252,7 @@ No guessing template SHA/type. Untagged events remain a known coverage limitatio
 ### atm_report.py — one relevant report without marking it read
 
 ```sh
-atm peek --team "$team" --as "$mailbox_agent" --message-id "$message_id" --json
+atm peek --team "$team" --as "$mailbox_agent" --all --message-id "$message_id" --json
 ```
 
 Use the mailbox identity from the search hit under configured read authority.
