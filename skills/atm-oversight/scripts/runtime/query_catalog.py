@@ -16,7 +16,7 @@ def calls(repo, policy, slots, now):
         slot = previous.get(key)
         scope = f"{repo['path']}@{phase['revision']}:{phase['plan']}"
         if not slot or slot.latest.status != 'ok' or slot.latest.scope != scope:
-            work.append((key, lambda p=phase: git_sprints.query(repo['path'], p['revision'], p['plan'], timeout)))
+            work.append((key, lambda p=phase: git_sprints.query(repo['path'], p['revision'], p['plan'], timeout, expected_sprints=p['expected_sprints'])))
     for name in ('atm_workflow', 'gh_prs'):
         slot = previous.get(name)
         since = slot.checkpoint if slot and slot.checkpoint else repo['since']
