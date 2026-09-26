@@ -1,0 +1,6 @@
+# Merge this setting into the existing profile config; preserve all other keys.
+# Render the deployment-specific directory before distribution. Do not replace
+# the full profile config with this fragment.
+skills:
+  external_dirs:
+    - "{{ omega_prime_skills_directory }}"
