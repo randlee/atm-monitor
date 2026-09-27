@@ -154,6 +154,19 @@ identity. The command preserves delivery receipts and records the domain change.
 Preserve a pre-upgrade state archive when installing this version: earlier bundles
 cannot decode its new activity/disposition record types.
 
+## Exact ancestry on force-pushed heads
+
+`gh_ancestry:PR` runs `git merge-base --is-ancestor` with provider-fresh base/head
+SHAs in a member worktree without fetching first. After a rebase/force-push the new
+head object does not exist locally, so the query fails with exit 128
+`fatal: Not a valid commit name <sha>` and is typed `retryable:false`. Investigation
+signature: compare `git ls-remote` head against local `git show-ref`; `git fetch
+--dry-run` showing a forced update confirms the class. A read-only
+`git fetch origin` (never checkout, tracking init, or stack rewrite) makes the exact
+failed commands succeed and the incident clears on the next tick. This is an
+observation-staleness defect in the adapter (no bounded fetch before ancestry), not a
+monitored-repo problem; escalate the design fix once per class, deduplicate repeats.
+
 ## Remote stacks without local tracking
 
 A successful complete `gh_checks:stack:ID` result supplies member order, parents
