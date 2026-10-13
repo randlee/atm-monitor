@@ -1,0 +1,29 @@
+query($ids: [ID!]!, $after: String) {
+  nodes(ids: $ids) {
+    ... PRStatus
+    ... on PullRequestStack {
+      id number baseRefName
+      entries(first: 50 __ENTRY_AFTER__) {
+        pageInfo { hasNextPage endCursor }
+        nodes { position pullRequest { ... PRStatus } }
+      }
+    }
+  }
+}
+fragment PRStatus on PullRequest {
+  id number updatedAt isDraft state headRefName headRefOid baseRefName baseRefOid
+  mergeable mergeStateStatus isInMergeQueue
+  stack { id number baseRefName }
+  stackEntry { position }
+  statusCheckRollup {
+    state commit { oid }
+    contexts(first: 50 __CHECK_AFTER__) {
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        __typename
+        ... on CheckRun { id name status conclusion startedAt completedAt detailsUrl }
+        ... on StatusContext { id context state createdAt targetUrl }
+      }
+    }
+  }
+}

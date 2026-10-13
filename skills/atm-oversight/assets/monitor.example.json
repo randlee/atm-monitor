@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "timeout_seconds": 15,
+  "retain_snapshots": 1000,
+  "teams": [
+    {
+      "name": "atm-dev",
+      "actor": "your-monitor-identity",
+      "repo": "/absolute/path/to/monitored-repository",
+      "projects": [],
+      "worktrees": []
+    }
+  ]
+}
