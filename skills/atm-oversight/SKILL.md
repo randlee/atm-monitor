@@ -109,6 +109,12 @@ Different changed files alone do not prove an environmental or transient failure
 A successful retry or matching baseline evidence can support that classification;
 until then label the cause unknown. `MERGEABLE` means no merge conflict, not that
 required checks passed: report `mergeStateStatus` and outstanding checks separately.
+Local `gh stack view` rows like "PR #N not in the local stack" are tracking lag
+whenever the server REST stacks API lists the PR in an open stack (gh-stack cannot
+refresh local tracking while GraphQL is exhausted; REST appends still link). Link
+findings are server-authoritative: run one bounded REST link check before alerting
+a lead on stack coherence; only needs-rebase, no-PR and multi-stack-on-trunk rows
+are real coherence findings.
 
 For a delivery-overdue finding, reconcile the actual delivery receipt before
 resending. Investigation does not finish with “monitor for retry”: identify who
