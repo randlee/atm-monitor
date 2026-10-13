@@ -142,6 +142,16 @@ Do not reset system privacy controls, move repositories, alter the ATM database,
 restart unrelated services, or modify monitored code as a monitoring repair.
 Escalate a concrete decision if recovery requires authority you do not have.
 
+## Lead-correction reminders
+
+Every oversight correction or notification sent to a team lead appends the
+standing reminder block verbatim (Rand, 2026-10-13, Phase-K monitor directive):
+(a) there should always be 2 items in the ATM task queue if work is available;
+(b) severity and quality-mgr tasks should be assigned immediately;
+(c) the branch is rebased and stacked immediately before sending to quality-mgr.
+These are reminders, not findings: they accompany the signal, are never the
+reason for the notification, and do not count toward dedup identity.
+
 ## Follow-through
 
 Persist incident identity, owner, last action, actual delivery ID and resolution
